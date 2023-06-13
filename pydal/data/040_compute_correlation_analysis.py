@@ -129,6 +129,8 @@ def compute_linear_regressions(
         temp['North_v_South_r'] = corr
         temp['North_v_South_p'] = p
         result[runID] = temp
+        
+        print (runID + ' finished computing')
 
     result['Frequency'] = f
     
@@ -136,7 +138,6 @@ def compute_linear_regressions(
         fname = p_data_dir + r'regress_and_corr_dict.pkl'
         with open( fname, 'wb' ) as file:
             pickle.dump( result, file )
-
 
     return result
 

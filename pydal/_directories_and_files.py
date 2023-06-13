@@ -33,6 +33,19 @@ DIR_TRACK_DATA = \
 DIR_HYDRO_CALS = \
     r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\2019-Orca Ranging\Range Data Amalg\\'
 
+DIR_BELLHOP_DATA = \
+    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\interim\BELLHOP_synthetic\\'
+
+DIR_RAM_DATA = \
+    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\interim\RAM_synthetic\\'
+
+DIR_SL_RESULTS_LOGR = \
+    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\processed\SL results 20logR\\'
+
+DIR_SL_RESULTS_RAM = \
+    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\processed\SL results RAM\\'
+
+
 """ 
 
 RELATIVE FILE NAMES 

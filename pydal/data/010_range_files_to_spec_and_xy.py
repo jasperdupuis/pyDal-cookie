@@ -172,8 +172,8 @@ def get_and_interpolate_calibrations(
                        skiprows=p_range_dictionary['AMB CAL North Spectral file lines to skip'],
                        encoding = "ISO-8859-1")
     freqs = df_s[df_s.columns[0]].values
-    df_cals = freqs[1] - freqs[0]
-    len_conv = int(target_bw / df_cals)
+    delta_f_cals = freqs[1] - freqs[0]
+    len_conv = int(np.ceil((target_bw / delta_f_cals )))
     s = df_s[df_s.columns[1]].values # Should be AMPL (which is really dB)
     n = df_n[df_n.columns[1]].values # SHould be AMPL (which is really dB)
     # Valid provides results only where signals totally overlap
@@ -198,10 +198,13 @@ def apply_calibrations_to_spectrogram(p_gram_f,
                                       p_cal,
                                       p_ref_value = _vars.REF_UPA):                                      
     min_index = pydal.utils.find_target_freq_index(min(p_target_freq_basis), p_gram_f)
-    max_index = pydal.utils.find_target_freq_index(max(p_target_freq_basis), p_gram_f) + 1
+    max_index = pydal.utils.find_target_freq_index(max(p_target_freq_basis), p_gram_f)
+
+    while len ( p_target_freq_basis )  > max_index - min_index:
+        max_index += 1
     # Add 1 to above to align p_gram_f and p_target_freq_basis in multiplication below
-    gram = 10*np.log10(p_gram[min_index:max_index,:])
-    gram = p_cal + gram.T # range fuckup
+    gram = 10*np.log10( p_gram [min_index:max_index,:])
+    gram = p_cal + gram.T # range fuckup, converts from V^2 / hz to uPa^2 / hz
     gram = p_ref_value * ( 10 ** ( gram / 10 ) ) 
     return gram.T
 
@@ -297,9 +300,9 @@ def interpolate_x_y(
 def process_h5_timeseries_to_spectrograms_from_run_list(
     p_list_run_IDs,         # Which runs to process
     p_df,                   # The trial dictionary
-    p_fs_hyd = 204800.,
-    p_window = np.hanning(204800*1),
-    p_overlap_fraction = 0.9,
+    p_fs_hyd = _vars.FS_HYD,
+    p_window = np.hanning( _vars.FS_HYD * _vars.T_HYD ),
+    p_overlap_fraction = _vars.OVERLAP,
     p_range_dictionary = _vars.RANGE_DICTIONARY,
     p_trial_search = 'DRJ',
     p_hydro_dir = _dirs.DIR_HDF5_HYDROPHONE,
@@ -408,26 +411,121 @@ def process_h5_timeseries_to_spectrograms_from_run_list(
 
 
 if __name__ == '__main__':    
-    local_df = pd.read_csv(_dirs.TRIAL_MAP)
-    list_run_IDs = local_df[ local_df.columns[1] ].values
+    # local_df = pd.read_csv(_dirs.TRIAL_MAP)
+    # list_run_IDs = local_df[ local_df.columns[1] ].values
 
-    overlap = _vars.OVERLAP
-    window_length = _vars.T_HYD_WINDOW
+    # overlap = _vars.OVERLAP
+    # window_length = _vars.T_HYD_WINDOW
     
-    window = np.hanning(_vars.FS_HYD * window_length)
-    fs_hyd = _vars.FS_HYD
-    range_dict = _vars.RANGE_DICTIONARY
-    mistakes = _vars.OOPS_DYN
+    # window = np.hanning(_vars.FS_HYD * window_length)
+    # fs_hyd = _vars.FS_HYD
+    # range_dict = _vars.RANGE_DICTIONARY
+    # mistakes = _vars.OOPS_DYN
     
-    process_h5_timeseries_to_spectrograms_from_run_list(
-        list_run_IDs,
-        local_df,
-        fs_hyd,
-        window,
-        overlap,
-        range_dict,
-        p_trial_search = 'DRJ',
-        p_hydro_dir = _dirs.DIR_HDF5_HYDROPHONE,
-        p_track_dir = _dirs.DIR_TRACK_DATA,
-        p_mistakes = mistakes)
+    # process_h5_timeseries_to_spectrograms_from_run_list(
+    #     list_run_IDs,
+    #     local_df,
+    #     fs_hyd,
+    #     window,
+    #     overlap,
+    #     range_dict,
+    #     p_trial_search = 'DRJ',
+    #     p_hydro_dir = _dirs.DIR_HDF5_HYDROPHONE,
+    #     p_track_dir = _dirs.DIR_TRACK_DATA,
+    #     p_mistakes = mistakes)
+    
+    # runID       = r'DRJ2PB03AX01EB'
+    runID       = r'DRJ3PB09AX01EB'
+    p_hydro_dir         = _dirs.DIR_HDF5_HYDROPHONE
+    p_t_hyd             = 1.5
+    p_window            = np.hanning(_vars.FS_HYD * p_t_hyd )
+    p_overlap_fraction  = 0.9
+    p_fs_hyd            = _vars.FS_HYD
+    p_ref_unit          = _vars.REF_UPA
+
+    target_freq_basis,s_cal,n_cal = get_and_interpolate_calibrations(
+        p_window_t = p_t_hyd ) # defaults are good except for testing this variable
+
+    temp = dict()
+    hydros = pydal.utils.get_hdf5_hydrophones_file_as_dict(runID,p_hydro_dir)
+    temp['South'] = hydros['South']        
+    temp['South labels'] = hydros['South labels']        
+    temp['North'] = hydros['North']
+    temp['North labels'] = hydros['North labels']
+
+    s1 = np.sum(p_window)
+    s2 = np.sum(p_window**2) # completeness - not used by me. STFT applies it.
+    #Now the 'grams
+    overlap_n = int( p_overlap_fraction * p_fs_hyd )
+    """
+
+    Using default signal.STFT behaviour and using Heinzel definitions of scale
+    factors, the returned complex array s_z or n_z is equal to X[k] / s1
+    
+    That is, it is a magnitude spectrum.
+        
+    return_onsided = True SHOULD mean needn't include factor of 2 in my processing.
+    However inspection of scipy.signal._spectral_helper and other subfunctions
+    shows that multiplying X[k] by two is still necessary. BUT don't want
+    to include s1 in that factor of two.
+    
+    To convert returned X[k] / s1 to power spectrum, must multiply by 2 after
+    taking out the factor s1, THEN square s_z or n_z.
+    
+    To get power spectral density from power spectrum, 
+    scale as follows :
+        
+    PSD  = PS / ENBW = PS / ( ( fs * S2 ) / (s1**2) )
+    
+    """
+    # f,s_t,s_z = signal.stft(temp['South'], # only need north for testing.
+    #                       p_fs_hyd,
+    #                       window = p_window,
+    #                       nperseg = len(p_window),
+    #                       noverlap = overlap_n,
+    #                       nfft = None,
+    #                       return_onesided = True,
+    #                       scaling = 'spectrum')
+    f,n_t,n_z = signal.stft(temp['North'],
+                          p_fs_hyd,
+                          window = p_window,
+                          nperseg = len(p_window),
+                          noverlap = overlap_n,
+                          nfft = None,
+                          return_onesided = True,
+                          scaling = 'spectrum')
+    ps_to_psd_divisor   = ( p_fs_hyd * s2 ) / (s1 ** 2)
+    # s_z = 2 * (np.abs( s_z )**2) / ( s2)              # PSD
+    # s_z = s_z * s1                                    # 
+    n_z =  ( n_z * s1 )                                 # X[K] (stft applies X[k]/s1, reverse this)
+    n_ps = 2 * ( np.abs( n_z ) ** 2 ) / ( s1 ** 2 )     # POWER SPECTRUM (PS)
+    n_psd = n_ps / ps_to_psd_divisor                    # POWER SPETRAL DENSITY (PSD)
+    n_z = n_psd
+    
+    # s_z = apply_calibrations_to_spectrogram(
+    #     f, s_z, target_freq_basis, s_cal, p_ref_unit )
+    n_z = apply_calibrations_to_spectrogram(
+        f, n_z, target_freq_basis, n_cal, p_ref_unit )
+    n_res = np.mean(n_z[:,30:60],axis=1)
+    
+    import matplotlib.pyplot as plt #visualization import only
+    fname = r'C:/Users/Jasper/Documents/Repo/pyDal/pyDal-cookie/data/raw/2019-Orca Ranging/Range Data Amalg/ES0451_MOOSE_OTH_DYN/RUN_ES0451_DYN_041_000_EAST_Nhyd_PORT_NB.CSV'
+    n_TL = 41.109 # hard read from range file
+    df = pd.read_csv(fname,skiprows=61)
+    range_f = df[df.columns[0]].values[:len(n_res)]
+    range_x = df[df.columns[1]].values[:len(n_res)]
+
+    my_f = f[:len(n_res)]
+    my_x = 10 * np.log10 ( n_res / _vars.REF_UPA ) + n_TL
+    plt.figure()
+    plt.plot(my_f,my_x,label='My result');plt.xscale('log')
+    plt.plot(range_f,range_x,label='Range result');plt.xscale('log')
+    plt.legend()
+
+
+    delta = np.mean(range_x - my_x)
+    plt.f
+    plt.plot(range_f,range_x - my_x);plt.xscale('log')
+
+    
 

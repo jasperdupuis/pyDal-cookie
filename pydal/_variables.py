@@ -12,6 +12,24 @@ import os
 
 """
 
+ML VARIABLES
+
+"""
+
+SEED                        = 50 # key for repeatability!
+BATCH_SIZE                  = 250
+EPOCHS                      = 20
+NUM_ML_WORKER_THREADS       = 1 # higher numbers should but dont work.
+LEARNING_RATE               = 0.1
+
+
+FRACTION_VALIDATION         = 0.1
+FRACTION_TEST               = 0.2
+FRACTION_TRAIN              = 0.7
+
+
+"""
+
 TRIAL VARIABLES
 
 """
@@ -32,8 +50,12 @@ REF_UPA = 0.000001
 LOCATION AND HYDROPHONE SELECTION VARIABLES
 
 """
+TRACK_ROTATION_DEG = 33 # the value by which x y data must be rotated to match lat-lon based xy.
+TRACK_ROTATION_RADS = TRACK_ROTATION_DEG * 3.14159 / 180
 HYDROPHONE = 'NORTH'
 LOCATION = 'Patricia Bay'
+
+RAM_RESULTS_POINT_OR_LINE = 'POINT'
 
 fname_range_dict = \
     r'C:/Users/Jasper/Documents/Repo/pyDal/pyDal-cookie/data/raw/range_info/dynamic_patbay_2019.py'
@@ -44,12 +66,26 @@ with open(fname_range_dict,'r') as f:
 
 """
 
+MODEL VARIABLES
+
+"""
+
+RAM_DELTA_R             = 1.
+RAM_F_MIN_AVAIL         = 10    # Lowest freq for which I have run Ram TL
+RAM_F_MAX_AVAIL         = 599   # Highest freq for which I have run Ram TL
+RAM_F_FAILS             = [63]
+
+
+"""
+
 RUN VARIABLES
 
 """
 FREQS = 10 + np.arange(190)
 TARGET_FREQ = 15
 NUM_DAY = '3' #all results will filter on trial day number.
+
+DIST_TO_CPA = 33
 
 # An ambient run from July 2019
 # TYPE = 'AM'

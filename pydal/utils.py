@@ -9,12 +9,23 @@ import os
 import h5py as h5
 import numpy as np
 
+import pydal.utils
 import pydal._directories_and_files as _dirs
 
-def create_dirname(p_fs,p_win_length,p_overlap_fraction):
+import math
+
+def rotate(x,y,theta,xo=0,yo=0): 
+    #rotate x,y around xo,yo by theta (rad)
+    xr=math.cos(theta)*(x-xo)-math.sin(theta)*(y-yo)   + xo
+    yr=math.sin(theta)*(x-xo)+math.cos(theta)*(y-yo)  + yo
+    return xr,yr
+
+def create_dirname_spec_xy(p_fs,p_win_length,p_overlap_fraction):
     """
     Handle some logic implicit in naming spectrogram data representation,
     and generate a directory name or filename leading string.
+    
+    WIN_LENGTH IS INTEGER NUMBER OF SAMPLES LENGTH
     """
     t = p_win_length / p_fs
     bw = str ( 1 / t )[:3]
@@ -47,6 +58,7 @@ def get_all_runs_in_dir(
     """
     runs = os.listdir(p_dir)
     runs = [x.split('_')[0] for x in runs]
+    runs = [x for x in runs if x[:2] == 'DR']
     return runs
 
 def get_run_selection( 
@@ -90,6 +102,61 @@ def get_hdf5_hydrophones_file_as_dict(
     h.close()
     return result
 
+def get_spectrogram_file_as_dict(
+        p_runID,
+        p_dir,
+        p_rotation_rad = 0):
+    """
+    For the target runID and root directory create a dictionary with its data
+    """
+    result = dict()    
+    fname = p_dir + p_runID + r'_data_timeseries.hdf5'
+    h = h5.File(fname)
+    for key in list(h.keys()):
+        result[key] = h[key][:][:]
+    h.close()
+    
+    #need to do some data curation for length of time and spec dimensions.
+    if len( result['North_Spectrogram_Time'] ) < len(result['X']): 
+        # trim the last xy to make t_n fit.
+        result['X'],result['Y'] = result['X'][:-1],result['Y'][:-1]
+    
+    if p_rotation_rad == 0 : 
+        x = 1 # Do nothing
+    else: 
+        result['X'],result['Y']     = pydal.utils.rotate(
+            result['X'],
+            result['Y'], 
+            p_rotation_rad)
+
+    N = len(result['X'])
+    
+    return result, N
+
+
+def get_spectrogram_file_single_hydro_f_as_dict(
+        p_freq_index,
+        p_hydro,
+        p_runID,
+        p_dir,
+        p_rotation_rad = 0):
+    """
+    Reads a spectrogram-XY-time file using pydal.utils.get_spectrogram_file_as_dict
+    
+    Also adds a new key-value pair based on the passed combination of 
+    hydrophone and frequency. The key is "Label"
+    """
+    spec, N = get_spectrogram_file_as_dict(
+        p_runID,
+        p_dir,
+        p_rotation_rad )
+    if p_hydro == 'NORTH':            
+        spec['Label'] = spec ['North_Spectrogram'] [ p_freq_index , : ]
+    if p_hydro == 'SOUTH':            
+        spec['Label'] = spec ['South_Spectrogram'] [ p_freq_index , : ]
+
+    return spec, N
+    
 
 def find_target_freq_index(
         p_f_targ,
@@ -99,7 +166,7 @@ def find_target_freq_index(
     gets the first value where this is true.
     """
     target_index = \
-        np.where(p_f_basis - p_f_targ > 0)[0][0] 
+        np.where(p_f_basis - p_f_targ + 1 > 0)[0][0] 
     target_index = target_index - 1 #to ensure actually catching entire desired bin.
     return target_index
 
@@ -143,3 +210,21 @@ def load_target_spectrogram_data(
            print (p_runID + ' didn\'t work')
            print (p_runID + ' will have null entries')
        return result
+       
+   
+def get_gram_XY_index_by_distToCPA(
+        p_gram_dict,
+        p_distToCPA = 33 ):
+    """
+    Returns the start and end indices for when the track was within 
+    p_distToCPA meters from CPA on either side. 
+    """
+    x = p_gram_dict['X']
+    y = p_gram_dict['Y']
+    r_cpa = np.sqrt( x ** 2 + y ** 2 )
+    target_xy_index = \
+        np.where(r_cpa - p_distToCPA < 0)[0][0] 
+    start_index = target_xy_index
+    end_index = 2 * start_index
+    return start_index, end_index
+
