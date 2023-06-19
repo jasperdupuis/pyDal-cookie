@@ -169,6 +169,7 @@ def batch_process_and_store_runs_20logR(
 if __name__ == '__main__':
     
     # Process all runs that have passed spectrogram generation
+    """
     dir_name_savefiles    = _dirs.DIR_SL_RESULTS_LOGR
     dir_name_spectrograms = pydal.utils.create_dirname_spec_xy(
         p_fs              = _vars.FS_HYD,
@@ -180,10 +181,11 @@ if __name__ == '__main__':
     batch_process_and_store_runs_20logR(
         run_list,
         dir_name_savefiles)
+    """
     
     # Below runs and vsualized a single run.
     # Note code a bit different from 20logR to RAM, be careful.
-    """
+#    """
     import matplotlib.pyplot as plt
     import time
     
@@ -229,7 +231,30 @@ if __name__ == '__main__':
     plt.plot( f,  n_dB_of_SL_std_lin - s_dB_of_SL_std_lin , label = 'North - South')
     plt.xscale('log')
     plt.legend()
-    """
+
+
+    N_SIGMA         = 3 # 99% confidence, for a normal population...
+    n_SL_mean_lin   = _vars.REF_UPA * 10 ** ( n_SL_mean_dB / 10)
+    n_upper         = n_SL_mean_lin + n_SL_std_lin
+    n_U_dB          = 10*np.log10(n_upper / _vars.REF_UPA)
+    n_delta_std_dB  = n_U_dB - n_SL_mean_dB # This is the dB of one deviation
+    n_U_dB          = n_SL_mean_dB + (N_SIGMA * n_delta_std_dB)
+    n_L_dB          = n_SL_mean_dB - (N_SIGMA * n_delta_std_dB)
+    plt.figure()
+    plt.plot(f, n_U_dB,label = 'Upper 67% bound')    
+    plt.plot(f, n_SL_mean_dB,label = 'Mean')    
+    plt.plot(f, n_L_dB,label = 'Lower 67% bound')    
+    # plt.plot(f, n_L_dB,label = 'Lower 67%% bound')
+    plt.xscale('log')
+    plt.legend()
+    
+    plt.figure()
+    plt.plot(f,n_delta_std_dB,label = 'Std from previous - 20logR')
+    plt.xscale('log')
+    plt.legend()
+    
+
+#    """
 
 
 

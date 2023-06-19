@@ -102,6 +102,26 @@ def get_hdf5_hydrophones_file_as_dict(
     h.close()
     return result
 
+def _h5_key_value_to_dictionary(dictionary,hdf5):
+    """
+    Gadget to help read hdf5 files in to a dictionary structure.
+
+    Must be able to recursively handle groups as well as datasets
+    
+    handle is the hdf5 file reference, opened elsewhere!
+    """
+    for key in hdf5.keys():
+        value = hdf5[key]
+        t = type(value)
+        if t == h5._hl.group.Group: #Group
+            temp = dict()
+            result = _h5_key_value_to_dictionary(temp, value)
+            dictionary[key] = result
+        else: #Dataset
+            dictionary[key] = hdf5[key][:][:]
+    return dictionary
+
+
 def get_spectrogram_file_as_dict(
         p_runID,
         p_dir,
@@ -109,11 +129,11 @@ def get_spectrogram_file_as_dict(
     """
     For the target runID and root directory create a dictionary with its data
     """
-    result = dict()    
-    fname = p_dir + p_runID + r'_data_timeseries.hdf5'
-    h = h5.File(fname)
-    for key in list(h.keys()):
-        result[key] = h[key][:][:]
+    result          = dict()    
+    fname           = p_dir + p_runID + r'_data_timeseries.hdf5'
+    h               = h5.File(fname)
+    result          = dict()
+    result          = _h5_key_value_to_dictionary(result, h)
     h.close()
     
     #need to do some data curation for length of time and spec dimensions.
@@ -212,6 +232,21 @@ def load_target_spectrogram_data(
        return result
        
    
+def insert_hydro_RAM_TL_to_spec_dictionary_from_file(
+        p_hydro,
+        p_spec_dict,
+        p_runID,
+        p_data_dir
+        ):
+    fname   = p_data_dir + '\\' + p_runID + r'_data_timeseries.hdf5'           
+    key     = p_hydro.capitalize() + '_RAM_TL_interpolations'
+    subdictionary = dict()
+    with h5.File(fname, 'r') as file:
+        subdictionary  = _h5_key_value_to_dictionary(subdictionary,file[key])
+        p_spec_dict [ key ] = subdictionary
+    return p_spec_dict
+   
+    
 def get_gram_XY_index_by_distToCPA(
         p_gram_dict,
         p_distToCPA = 33 ):

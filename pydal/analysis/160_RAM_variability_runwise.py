@@ -21,14 +21,13 @@ from UWAEnvTools.singleTL.RAM import read_XY_TL_df
 def process_run_RAM(
     p_gram_lin,
     p_f,
-    p_gram_x,
-    p_gram_y,
+    p_gram_TL_f_dictionary,
     p_dir_RAM   = _dirs.DIR_RAM_DATA,
     p_hydro     = _vars.HYDROPHONE,
     p_f_min_RAM = _vars.RAM_F_MIN_AVAIL,
     p_f_max_RAM = _vars.RAM_F_MAX_AVAIL ):
     """
-    From already trimmed gram and xy data, calculate the avreage SL and STD.
+    From already trimmed gram and xy data, calculate the SL and STD.
     Do this accurately, using RAM model results:
         
         in dB, SL_i = RL_i + TL_i
@@ -38,11 +37,11 @@ def process_run_RAM(
         SL_db_mean = 10*np.log10(SL_lin_mean / _vars.REF_UPA)
         
     
-    For 10 to 599 Hz, takes just under 2 minutes.
+    For 10 to 599 Hz, takes ___ seconds .
     
     """
     
-    RL          = 10 * np.log10( p_gram_lin/ _vars.REF_UPA)
+    RL          = 10 * np.log10( p_gram_lin / _vars.REF_UPA)
     SL_dB       = RL
     
     # For available RAM freqs, interpolate TLs and apply to RL
@@ -56,14 +55,8 @@ def process_run_RAM(
             SL_dB [ RL_f_index , : ] =  RL[ RL_f_index , : ]  
             failures.append(freq)
             continue
-        fname_TL        = p_dir_RAM + str(freq).zfill(4) + r'_' + p_hydro.capitalize() + '.csv'
-        X,Y,TL          = read_XY_TL_df(fname_TL)
-        
-        TL_interped     = interpolate.griddata(
-            ( X , Y ) ,
-            TL ,
-            ( p_gram_x , p_gram_y ) )
-        SL_dB [ RL_f_index , : ] =  RL[ RL_f_index , : ]  + TL_interped
+        TLs = p_gram_TL_f_dictionary[str(freq).zfill(4)]
+        SL_dB [ RL_f_index , : ] =  RL[ RL_f_index , : ]  + TLs
     
     # r_TL is an array of TLs for each XY step in the spectrogram.
     # array broadcasts so that each timestep's 20logR is applied to all freqs
@@ -78,9 +71,10 @@ def process_run_RAM(
     return mean_dB, std_dB, std_lin
 
 
-def setup_trim_and_process_run_RAM(
+def setup_trim_and_process_run_RAM_one_hydro(
     p_runID         = r'DRJ3PB09AX01EB',
-    p_distToCPA      = 33,
+    p_hydro         = _vars.HYDROPHONE,
+    p_distToCPA     = 33,
     p_dir_ram       = _dirs.DIR_RAM_DATA,
     p_dir_spec      = _dirs.DIR_SPECTROGRAM,
     p_fs_hyd        = _vars.FS_HYD,
@@ -105,44 +99,44 @@ def setup_trim_and_process_run_RAM(
     gram_dict['X'] = spec_x
     gram_dict['Y'] = spec_y
     
+    if p_hydro == 'NORTH':        
+        spectrogram = gram_dict['North_Spectrogram']
+    elif p_hydro == 'SOUTH':        
+        spectrogram = gram_dict['South_Spectrogram']
+
+    
     # Get the indices associated with the available RAM TL frequencies:
     start_f_index                   = pydal.utils.find_target_freq_index(_vars.RAM_F_MIN_AVAIL , f )
     end_f_index                     = pydal.utils.find_target_freq_index(_vars.RAM_F_MAX_AVAIL , f )
-    gram_dict['North_Spectrogram']  = gram_dict['North_Spectrogram'][ start_f_index : end_f_index , : ]
-    gram_dict['South_Spectrogram']  = gram_dict['South_Spectrogram'][ start_f_index : end_f_index , :]
+    spectrogram                     = spectrogram [ start_f_index : end_f_index , : ]
     f                               = gram_dict['Frequency'][ start_f_index : end_f_index ]
     
     # Get the indices associated with the data window length:
     start_t_index , end_t_index     = pydal.utils.get_gram_XY_index_by_distToCPA(gram_dict,p_distToCPA)
     # trim the spectrograms and X Y data to only contain the data window length
-    gram_dict['North_Spectrogram']  = gram_dict['North_Spectrogram'][ :, start_t_index : end_t_index ]
-    gram_dict['South_Spectrogram']  = gram_dict['South_Spectrogram'][ :, start_t_index : end_t_index ]
+    spectrogram                     = spectrogram [ :, start_t_index : end_t_index ]
     gram_dict['X']                  = gram_dict['X'] [start_t_index : end_t_index ]
     gram_dict['Y']                  = gram_dict['Y'] [start_t_index : end_t_index ]
-
-
-    # North spectrogram processing RAM TL model
-    n_SL_mean_dB, n_SL_std_dB, n_SL_std_lin = process_run_RAM(
-        p_gram_lin  = gram_dict['North_Spectrogram'],
-        p_f         = f,
-        p_gram_x    = gram_dict['X'],
-        p_gram_y    = gram_dict['Y'] 
-        )
+    dictionary_TLs                  = gram_dict[p_hydro.capitalize() + '_RAM_TL_interpolations']
+    # trim and then reinsert all the TLs needed
+    for key,value in dictionary_TLs.items():
+        dictionary_TLs[key] = dictionary_TLs[key][start_t_index : end_t_index ]
+    gram_dict[p_hydro.capitalize() + '_RAM_TL_interpolations'] = dictionary_TLs
     
-    # South spectrogram processing 20logR
-    s_SL_mean_dB, s_SL_std_dB, s_SL_std_lin = process_run_RAM(
-        p_gram_lin  = gram_dict['South_Spectrogram'],
-        p_f         = f,
-        p_gram_x    = gram_dict['X'],
-        p_gram_y    = gram_dict['Y']
+    # South spectrogram processing RAM TL model
+    SL_mean_dB, SL_std_dB, SL_std_lin = process_run_RAM(
+        p_gram_lin             = spectrogram,
+        p_f                    = f,
+        p_gram_TL_f_dictionary = dictionary_TLs
         )
 
-    return f, n_SL_mean_dB, n_SL_std_dB, n_SL_std_lin ,s_SL_mean_dB, s_SL_std_dB, s_SL_std_lin 
+    return f ,SL_mean_dB, SL_std_dB, SL_std_lin 
 
 
 def batch_process_and_store_runs_RAM(
         p_runlist,
         p_save_dir,
+        p_hydro         = _vars.HYDROPHONE,
         p_dist_to_CPA   = _vars.DIST_TO_CPA,
         p_dir_ram       = _dirs.DIR_RAM_DATA,
         p_dir_spec      = _dirs.DIR_SPECTROGRAM,
@@ -150,54 +144,37 @@ def batch_process_and_store_runs_RAM(
         p_n_window      = _vars.T_HYD_WINDOW * _vars.FS_HYD,
         p_overlap       = _vars.OVERLAP
         ):
-    n_SL_mean_dB_dict = dict()
-    n_SL_std_dB_dict = dict()
-    n_SL_std_lin_dict = dict()
-    s_SL_mean_dB_dict = dict()
-    s_SL_std_dB_dict = dict()
-    s_SL_std_lin_dict = dict()
+    SL_mean_dB_dict = dict()
+    SL_std_dB_dict = dict()
+    SL_std_lin_dict = dict()
 
     for runID in p_runlist:
-        f, n_SL_mean_dB, n_SL_std_dB, n_SL_std_lin ,s_SL_mean_dB, s_SL_std_dB, s_SL_std_lin =\
-            setup_trim_and_process_run_RAM(
+        f, SL_mean_dB, SL_std_dB, SL_std_lin =\
+            setup_trim_and_process_run_RAM_one_hydro(
                 runID,
+                p_hydro,
                 p_dist_to_CPA,
                 p_dir_ram ,
                 p_dir_spec,
                 p_fs_hyd  ,
                 p_n_window,
                 p_overlap )
-        n_SL_mean_dB_dict[runID]    = n_SL_mean_dB
-        n_SL_std_dB_dict[runID]     = n_SL_std_dB
-        n_SL_std_lin_dict[runID]    = n_SL_std_lin
-        s_SL_mean_dB_dict[runID]    = s_SL_mean_dB
-        s_SL_std_dB_dict[runID]     = s_SL_std_dB
-        s_SL_std_lin_dict[runID]    = s_SL_std_lin
-    n_SL_mean_dB_dict['Frequency']  = f
-    n_SL_std_dB_dict['Frequency']   = f
-    n_SL_std_lin_dict['Frequency']  = f
-    s_SL_mean_dB_dict['Frequency']  = f
-    s_SL_std_dB_dict['Frequency']   = f
-    s_SL_std_lin_dict['Frequency']  = f
+        SL_mean_dB_dict[runID]    = SL_mean_dB
+        SL_std_dB_dict[runID]     = SL_std_dB
+        SL_std_lin_dict[runID]    = SL_std_lin
+    SL_mean_dB_dict['Frequency']  = f
+    SL_std_dB_dict['Frequency']   = f
+    SL_std_lin_dict['Frequency']  = f
     
-    df = pd.DataFrame.from_dict(n_SL_mean_dB_dict)
+    df = pd.DataFrame.from_dict(SL_mean_dB_dict)
     df.to_csv(p_save_dir + 'North Mean SL dB.csv')
 
-    df = pd.DataFrame.from_dict(n_SL_std_dB_dict)
+    df = pd.DataFrame.from_dict(SL_std_dB_dict)
     df.to_csv(p_save_dir + 'North STD SL dB.csv')
 
-    df = pd.DataFrame.from_dict(n_SL_std_lin_dict)
+    df = pd.DataFrame.from_dict(SL_std_lin_dict)
     df.to_csv(p_save_dir + 'North STD SL lin.csv')
 
-    df = pd.DataFrame.from_dict(s_SL_mean_dB_dict)
-    df.to_csv(p_save_dir + 'South Mean SL dB.csv')
-
-    df = pd.DataFrame.from_dict(s_SL_std_dB_dict)
-    df.to_csv(p_save_dir + 'South STD SL dB.csv')
-
-    df = pd.DataFrame.from_dict(s_SL_std_lin_dict)
-    df.to_csv(p_save_dir + 'South STD SL lin.csv')    
-    
     return    
 
 if __name__ == '__main__':
@@ -225,17 +202,22 @@ if __name__ == '__main__':
 #    """
 
     RUNID           = r'DRJ3PB09AX01EB'
+    HYDRO           = _vars.HYDROPHONE
     CPA_DIST        = 33
         
     start = time.time()
 
-    f, n_SL_mean_dB, n_SL_std_dB, n_SL_std_lin ,s_SL_mean_dB, s_SL_std_dB, s_SL_std_lin  = \
-        setup_trim_and_process_run_RAM(RUNID)
+    f, n_SL_mean_dB, n_SL_std_dB, n_SL_std_lin  = \
+        setup_trim_and_process_run_RAM_one_hydro( RUNID , p_hydro = 'NORTH' )
+
+    f, s_SL_mean_dB, s_SL_std_dB, s_SL_std_lin  = \
+        setup_trim_and_process_run_RAM_one_hydro( RUNID , p_hydro = 'SOUTH' )
+
 
     end = time.time()
     print('time elapsed: \t' + str(end-start) + ' seconds')
     
-    
+
     plt.figure()
     plt.title('Source level (SL) estimates with RAM \n Run ID: ' + RUNID)
     plt.plot(n_SL_mean_dB ,label='north') 
@@ -243,10 +225,10 @@ if __name__ == '__main__':
     plt.xscale('log')
     plt.legend()
     
-    plt.figure()
-    plt.title('Delta North - South with RAM \n SL Estimates\n Run ID: ' + RUNID)
-    plt.xscale('log')
-    plt.plot( n_SL_mean_dB - s_SL_mean_dB )
+    # plt.figure()
+    # plt.title('Delta North - South with RAM \n SL Estimates\n Run ID: ' + RUNID)
+    # plt.xscale('log')
+    # plt.plot( n_SL_mean_dB - s_SL_mean_dB )
     
     plt.figure()
     plt.title('STD of SL dB array with RAM \n Run ID: ' + RUNID)
@@ -270,8 +252,28 @@ if __name__ == '__main__':
     plt.xscale('log')
     plt.legend()
 
+    plt.figure()
+    N_SIGMA         = 3 # 99% confidence, for a normal population...
+    n_SL_mean_lin   = _vars.REF_UPA * 10 ** ( n_SL_mean_dB / 10)
+    n_upper         = n_SL_mean_lin + n_SL_std_lin
+    n_U_dB          = 10*np.log10(n_upper / _vars.REF_UPA)
+    n_delta_std_dB  = n_U_dB - n_SL_mean_dB # This is the dB of one deviation
+    n_U_dB          = n_SL_mean_dB + (N_SIGMA * n_delta_std_dB)
+    n_L_dB          = n_SL_mean_dB - (N_SIGMA * n_delta_std_dB)
+    plt.plot(f, n_U_dB,label = 'Upper 67% bound')    
+    plt.plot(f, n_SL_mean_dB,label = 'Mean')    
+    plt.plot(f, n_L_dB,label = 'Lower 67% bound')    
+    # plt.plot(f, n_L_dB,label = 'Lower 67%% bound')
+    plt.xscale('log')
+    plt.legend()
+    
+    plt.plot(f,n_delta_std_dB,label = 'Std from previous - RAM')
+    plt.xscale('log')
+    plt.legend()
+    
+    
 
-#    """
+   # """
 
 
 
