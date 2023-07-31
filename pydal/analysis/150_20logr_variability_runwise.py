@@ -190,12 +190,12 @@ if __name__ == '__main__':
     import time
     
     # Parameters to perform analysis
-    RUNID       = r'DRJ3PB09AX01EB'
-    DISTTOCPA   = 33 #m
+    RUNID       = r'DRJ2PB15EX00EB'
+    CPA_DIST   = 33 #m
     
     
     f, n_SL_mean_dB, n_SL_std_dB, n_SL_std_lin ,s_SL_mean_dB, s_SL_std_dB, s_SL_std_lin =\
-        setup_trim_and_process_run_20logR(RUNID,DISTTOCPA)
+        setup_trim_and_process_run_20logR(RUNID,CPA_DIST)
     
     
     plt.figure()

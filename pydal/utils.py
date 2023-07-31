@@ -74,10 +74,32 @@ def get_run_selection(
     result = []
     for runID in p_list_runs:
         if (p_type not in runID[:2]): continue # Type selection
-        if (p_mth not in runID[2]): continue # Month (year) selection
-        if (p_machine not in runID[8]): continue # Machine config selection
+
+        # Month selection (functionally, selection on 2019 or 2020 data)
+        if (p_mth == 'X') : # All month selections returned.
+            result.append(runID)
+            continue
+        elif (p_mth not in runID[2]): 
+            continue # Heading selection
+
+
+        # Machine config selection
+        if (p_machine == 'X') : # All machine states.
+            result.append(runID)
+            continue
+        elif (p_machine not in runID[8]): 
+            continue # Heading selection
+
+        # Nominal speed selection
         if (p_speed not in runID[6:8]): continue # peed selection
-        if (p_head == 'X') : # Check for heading agnostic first.
+        if (p_speed == 'X') : # All machine states.
+            result.append(runID)
+            continue
+        elif (p_speed  not in runID[6:8]): 
+            continue # Heading selection
+        
+        # Heading selection
+        if (p_head == 'X') : 
             result.append(runID)
             continue
         elif (p_head not in runID[12]): 

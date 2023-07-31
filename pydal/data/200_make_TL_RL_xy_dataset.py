@@ -27,7 +27,8 @@ from UWAEnvTools.singleTL.RAM import \
 
     
 if __name__ == '__main__':
-    p_hydro         = 'SOUTH'
+    p_south         = 'SOUTH'
+    p_north         = 'NORTH'
     p_dir_RAM       = _dirs.DIR_RAM_DATA
     p_dir_spec      = _dirs.DIR_SPECTROGRAM
     dir_spec_subdir = pydal.utils.create_dirname_spec_xy(
@@ -48,32 +49,61 @@ if __name__ == '__main__':
         spec_dict = \
             pydal.utils.load_target_spectrogram_data(
                 runID, p_dir_spec)
+            
+        start = time.time()        
         
-        start = time.time()
-        
-        runID_RAM_TLs = \
+        # SOUTH :
+        runID_RAM_TL_s = \
             RAM.interpolate_TL_over_XY_set_multi_f(
                 p_freq_targets  = freqs_RAM,
                 p_f_basis       = spec_dict['Frequency'], 
                 p_gram_x        = spec_dict['X'], 
                 p_gram_y        = spec_dict['Y'],
-                p_dir_RAM   = p_dir_RAM,
-                p_hydro     = p_hydro)
+                p_dir_RAM       = p_dir_RAM,
+                p_hydro         = p_south)
         
         end = time.time()    
-        print(runID + ' computation time: ' + str(end-start))
+        print(runID + ' south computation time: ' + str(end-start))
         
         fname = p_dir_spec + '\\' + runID + r'_data_timeseries.hdf5' 
         
-        gname = p_hydro.capitalize() + '_RAM_TL_interpolations'
+        gname = p_south.capitalize() + '_RAM_TL_interpolations'
         h = h5.File(fname,mode='a')
         try:
             group = h.create_group(gname )
         except:
-            print (runID + ' already had ' + p_hydro.capitalize() +' RAM TL interpolation done, overwriting it.')
+            print (runID + ' already had ' + p_south.capitalize() +' RAM TL interpolation done, overwriting it.')
             del h[ gname ]
             group = h.create_group(gname)
-        for key,value in runID_RAM_TLs.items():
+        for key,value in runID_RAM_TL_s.items():
             group[str(key).zfill(4)] = np.array(value[:])
         h.close()
+        
+        # NORTH:
+        runID_RAM_TL_n = \
+            RAM.interpolate_TL_over_XY_set_multi_f(
+                p_freq_targets  = freqs_RAM,
+                p_f_basis       = spec_dict['Frequency'], 
+                p_gram_x        = spec_dict['X'], 
+                p_gram_y        = spec_dict['Y'],
+                p_dir_RAM       = p_dir_RAM,
+                p_hydro         = p_north)
+        
+        end = time.time()    
+        print(runID + ' north computation time: ' + str(end-start))
+        
+        fname = p_dir_spec + '\\' + runID + r'_data_timeseries.hdf5' 
+        
+        gname = p_north.capitalize() + '_RAM_TL_interpolations'
+        h = h5.File(fname,mode='a')
+        try:
+            group = h.create_group(gname )
+        except:
+            print (runID + ' already had ' + p_north.capitalize() +' RAM TL interpolation done, overwriting it.')
+            del h[ gname ]
+            group = h.create_group(gname)
+        for key,value in runID_RAM_TL_n.items():
+            group[str(key).zfill(4)] = np.array(value[:])
+        h.close()
+        
 

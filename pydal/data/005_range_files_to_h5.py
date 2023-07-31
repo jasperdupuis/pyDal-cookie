@@ -556,7 +556,7 @@ def range_binary_to_dictionary(
 
 def filenames_from_df_row(p_row):
     south = p_row['South hydrophone raw']
-    north = p_row['South hydrophone raw']
+    north = p_row['North hydrophone raw']
     return south,north
 
 
@@ -602,16 +602,23 @@ def process_batch_from_df(
 
 
 if __name__ =='__main__':
-    local_df = pd.read_csv(_dirs.TRIAL_MAP)
-    source_dir = _dirs.DIR_BINARY_HYDROPHONE
-    target_dir = _dirs.DIR_HDF5_HYDROPHONE
-    dict_range_config = _vars.RANGE_DICTIONARY
-    if not ( os.path.isdir(target_dir)) : # need to make dir if doesnt exist
-        os.mkdir(target_dir)
-    process_batch_from_df(local_df,source_dir,target_dir,dict_range_config)
+    BATCH_RUN = True
+    SINGLE_RUN = False
+    if BATCH_RUN:
+        local_df = pd.read_csv(_dirs.TRIAL_MAP)
+        source_dir = _dirs.DIR_BINARY_HYDROPHONE
+        target_dir = _dirs.DIR_HDF5_HYDROPHONE
+        dict_range_config = _vars.RANGE_DICTIONARY
+        if not ( os.path.isdir(target_dir)) : # need to make dir if doesnt exist
+            os.mkdir(target_dir)
+        process_batch_from_df(local_df,source_dir,target_dir,dict_range_config)
 
+    if SINGLE_RUN:
+        runid = r'DRJ2PB11EX00WB'
+        fname_s = r'RUN_ES0451_DYN_032_000_WEST_Shyd_PORT_TM.bin'
+        fname_n = r'RUN_ES0451_DYN_032_000_WEST_Nhyd_STBD_TM.bin'
+        
+        res = range_binary_to_dictionary(
+            fname_s, fname_n)
 
-
-
-
-
+    

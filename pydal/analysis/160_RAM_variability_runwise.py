@@ -201,8 +201,8 @@ if __name__ == '__main__':
     # Note code a bit different from 20logR to RAM, be careful.
 #    """
 
-    RUNID           = r'DRJ3PB09AX01EB'
-    HYDRO           = _vars.HYDROPHONE
+    RUNID           = r'DRJ2PB15EX00EB'
+    # RUNID           = r'DRJ2PB15EX00EB'
     CPA_DIST        = 33
         
     start = time.time()
@@ -225,10 +225,10 @@ if __name__ == '__main__':
     plt.xscale('log')
     plt.legend()
     
-    # plt.figure()
-    # plt.title('Delta North - South with RAM \n SL Estimates\n Run ID: ' + RUNID)
-    # plt.xscale('log')
-    # plt.plot( n_SL_mean_dB - s_SL_mean_dB )
+    plt.figure()
+    plt.title('Delta North - South with RAM \n SL Estimates\n Run ID: ' + RUNID)
+    plt.xscale('log')
+    plt.plot( n_SL_mean_dB - s_SL_mean_dB )
     
     plt.figure()
     plt.title('STD of SL dB array with RAM \n Run ID: ' + RUNID)

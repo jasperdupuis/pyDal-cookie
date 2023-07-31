@@ -51,11 +51,11 @@ h = h5.File(fname_spec)
 keys_spec = list(h.keys())
 spec_x = h['X'][:][:]
 spec_y = h['Y'][:][:]
-spec_f = h[keys_spec[0]][:][:]
-gram_n = h[keys_spec[3]][:][:]
-t_n  = h[keys_spec[4]][:][:]
-gram_s = h[keys_spec[7]][:][:]
-t_s  = h[keys_spec[8]][:][:]
+spec_f = h['Frequency'][:][:]
+gram_n = h['North_Spectrogram'][:][:]
+t_n  = h['North_Spectrogram_Time'][:][:]
+gram_s = h['South_Spectrogram'][:][:]
+t_s  = h['South_Spectrogram_Time'][:][:]
 h.close() # hdf5 File closed.
 spec_x,spec_y = pydal.utils.rotate(spec_x, spec_y, track_rotation_rads)
 spec_x,spec_y = spec_x[:-1],spec_y[:-1] # trim the last sample to make t_n fit.
@@ -64,8 +64,7 @@ spec_x,spec_y = spec_x[:-1],spec_y[:-1] # trim the last sample to make t_n fit.
 # TRANSMISSION LOSS DATA
 # NOTE: This is frequency dependent to load!
 # RAM model results for a particular frequency.
-freq = freqs[-1] # FOR TESTING # TODO : REMOVE this line
-freq = 500
+freq = 313
 spec_f_index = pydal.utils.find_target_freq_index( # find the frequency in the spectrogram array indexing
     freq,
     spec_f)
@@ -79,19 +78,7 @@ read_interpolate_plot_TL_df(
     p_ylim = y_lim,
     p_nstep = 100,
     p_comex = 100)
-
-TL_interped = \
-    interpolate.griddata(
-        (X,Y),
-        TL,
-        (spec_x,spec_y))
-
-RL_n_f_at_0dc = 10 * np.log10 ( gram_n[ spec_f_index , : ] ) \
-                - np.mean  (10 * np.log10 ( gram_n [ spec_f_index , : ] ))
-TL_n_f_at_0dc = TL_interped - np.mean ( TL_interped )
-
-fig,ax = plt.subplots( figsize = ( 8 , 5 ) )
-ax.plot( t_n , RL_n_f_at_0dc , label = 'RL')
-ax.plot( t_n , TL_n_f_at_0dc , label = 'TL')
-plt.legend()
+plt.title('Nominal track and RAM TL profile \n North hydrophone, ' + str ( freq) + ' Hz')
+plt.xlabel('Range x-coordinate (m)')
+plt.ylabel('Range y-coordinate (m)')
 
