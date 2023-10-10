@@ -11,6 +11,7 @@ import numpy as np
 
 import pydal.utils
 import pydal._directories_and_files as _dirs
+import pydal._variables as _vars
 
 import math
 
@@ -72,39 +73,44 @@ def get_run_selection(
     Get an unordered list of runs based on simple criteria and return it
     """
     result = []
+    
     for runID in p_list_runs:
-        if (p_type not in runID[:2]): continue # Type selection
+        typeof      = True
+        mth         = False
+        mach        = False
+        speed       = False
+        head        = False
+
+        # Type selection
+        if (p_type not in runID[:2]): 
+            continue  # this run doesn't fit selection
 
         # Month selection (functionally, selection on 2019 or 2020 data)
         if (p_mth == 'X') : # All month selections returned.
-            result.append(runID)
-            continue
-        elif (p_mth not in runID[2]): 
-            continue # Heading selection
-
+            mth = True
+        elif (p_mth in runID[2]): 
+            mth = True  
 
         # Machine config selection
         if (p_machine == 'X') : # All machine states.
-            result.append(runID)
-            continue
-        elif (p_machine not in runID[8]): 
-            continue # Heading selection
-
+            mach = True
+        elif (p_machine in runID[8]): 
+            mach = True
+            
         # Nominal speed selection
-        if (p_speed not in runID[6:8]): continue # peed selection
-        if (p_speed == 'X') : # All machine states.
-            result.append(runID)
-            continue
-        elif (p_speed  not in runID[6:8]): 
-            continue # Heading selection
-        
+        if (p_speed == 'X') : # All speeds.
+            speed = True
+        elif (p_speed in runID[6:8]): 
+            speed = True
+            
         # Heading selection
-        if (p_head == 'X') : 
+        if (p_head == 'X') :  # all headings
+            head = True
+        elif (p_head in runID[12]): 
+            head = True
+            
+        if typeof and mth and mach and speed and head:
             result.append(runID)
-            continue
-        elif (p_head not in runID[12]): 
-            continue # Heading selection
-        result.append(runID)
         
     return result
 
@@ -243,6 +249,11 @@ def load_target_spectrogram_data(
            result['South_Spectrogram']      = file['South_Spectrogram'][:]
            result['South_Spectrogram_Time'] = file['South_Spectrogram_Time'][:]
            result['Frequency']              = file['Frequency'][:]
+           # BELOW NOT FUTURE PROOF, CHANGED 'Theta North' To 'North_Theta' in 
+           # script #015 to be  consistent AFTER generation of 
+           # data files 2023 09 01.
+           result['North_Theta']            = file['Theta North'][:] * _vars.DEG_TO_RAD
+           result['South_Theta']            = file['Theta South'][:] *_vars.DEG_TO_RAD
            if 'AM' not in p_runID :
                result['X'] = file['X'][:]
                result['Y'] = file['Y'][:]

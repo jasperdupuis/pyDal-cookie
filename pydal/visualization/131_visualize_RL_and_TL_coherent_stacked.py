@@ -20,8 +20,10 @@ import pydal._variables as _vars
 import pydal._directories_and_files as _dirs
 
 
+PLOT_TL = False
+
 N_AVE           = 11 #for a smoothing window
-p_freq          = 313
+p_freq          = 11
 # p_hydro         = _vars.HYDROPHONE
 p_hydro         = 'SOUTH'
 p_dist_to_CPA   = _vars.DIST_TO_CPA

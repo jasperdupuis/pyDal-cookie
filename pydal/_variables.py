@@ -11,6 +11,13 @@ import numpy as np
 import os
 
 """
+MATH / PHYSICS VARIABLES
+"""
+DEG_TO_RAD = np.pi / 180 
+
+
+
+"""
 
 ML VARIABLES
 
@@ -116,21 +123,18 @@ Tracking of various kinds of lists of runs:
 """
 
 # Runs that need a closer look before they will batch:
-OOPS_DYN = ['DRJ3PB09AX02EB',# these runs fail interpolation (needed time basis exceeds provided)
-        'DRJ3PB09AX02WB', 
-        'DRJ3PB19AX02EB', 
-        'DRJ3PB15AX00EN', # There are no track files for these runs.
+OOPS_DYN = ['DRJ3PB15AX00EN', # There are no track files for these runs.
         'DRJ3PB15AX00WN',
         'DRJ3PB17AX00EN',
         'DRJ3PB17AX00WN',
-        'DRJ3PB05AX02EB', # These runs generate hdf5 files with 0 size, but don't fail processing somehow.
-        'DRJ2PB11AX01WB',
-        'DRJ1PB05BX00WB',
-        'DRJ1PB19AX00EB',
-        'DRJ1PB05AX00EB', 'DRJ1PB05AX00WB', 'DRJ1PB07AX00EB', #Fucked these up with track overwrite.
-        'DRJ1PB07AX00WB', 'DRJ1PB09AX00EB', 'DRJ1PB09AX00WB',
-        'DRJ1PB11AX00EB', 'DRJ1PB11AX00WB', 'DRJ1PB13AX00EB',
-        'DRJ1PB13AX00WB', 'DRJ1PB15AX00EB', 'DRJ1PB15AX00WB'
+        # 'DRJ3PB05AX02EB', # These runs generate hdf5 files with 0 size, but don't fail processing somehow.
+        # 'DRJ2PB11AX01WB',
+        # 'DRJ1PB05BX00WB',
+        # 'DRJ1PB19AX00EB',
+        # 'DRJ1PB05AX00EB', 'DRJ1PB05AX00WB', 'DRJ1PB07AX00EB', #Fucked these up with track overwrite.
+        # 'DRJ1PB07AX00WB', 'DRJ1PB09AX00EB', 'DRJ1PB09AX00WB',
+        # 'DRJ1PB11AX00EB', 'DRJ1PB11AX00WB', 'DRJ1PB13AX00EB',
+        # 'DRJ1PB13AX00WB', 'DRJ1PB15AX00EB', 'DRJ1PB15AX00WB'
         ] 
 
 

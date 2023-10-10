@@ -271,7 +271,6 @@ def align_track_and_hyd_data(
     return p_the_run_dictionary
 
 
-
 def interpolate_x_y(
     p_the_run_dictionary):
     # Now, must make sure there is an x,y sample for each time step.
@@ -287,7 +286,8 @@ def interpolate_x_y(
     t = np.arange(
         p_the_run_dictionary['Time'][0], #start
         p_the_run_dictionary['Time'][-1], #stop
-        1/_vars.FS_GPS)                        #step
+        1/_vars.FS_GPS)                   #step
+    t = np.round(t,1) #round the array to the 
     p_the_run_dictionary['X'] = x_function(t)
     p_the_run_dictionary['Y'] = y_function(t)
     p_the_run_dictionary['Time'] = t
@@ -332,7 +332,8 @@ def process_h5_timeseries_to_spectrograms_from_run_list(
             continue #I  made some mistakes... must reload these trk files properly later
         fname_hdf5 = target_dir + r'\\'+ runID + r'_data_timeseries.hdf5'           
         if os.path.exists(fname_hdf5): 
-            os.remove(fname_hdf5)
+            continue
+            # os.remove(fname_hdf5)
             # Will usually want to re-write when running a batch.
         temp = dict()
         row = p_df[ p_df ['Run ID'] == runID ]
@@ -409,12 +410,34 @@ def process_h5_timeseries_to_spectrograms_from_run_list(
 
 if __name__ == '__main__':    
 
-    BATCH_RUN = True
-    SINGLE_RUN = False
+    BATCH_RUN   = True
+    MANUAL_RUNS = False
+    SINGLE_RUN  = False
+
+    TYPE    = 'DR'
+    MTH     = 'J' # J is 2019, F is 2020
+    MACHINE = 'X'
+    SPEED   = 'X'
+    HEAD    = 'X'
+
+    runs_to_do = ['DRJ1PB05AX00EB', 'DRJ1PB05AX00WB', 'DRJ1PB07AX00EB', #Fucked these up with track overwrite.
+            'DRJ1PB07AX00WB', 'DRJ1PB09AX00EB', 'DRJ1PB09AX00WB',
+            'DRJ1PB11AX00EB', 'DRJ1PB11AX00WB', 'DRJ1PB13AX00EB',
+            'DRJ1PB13AX00WB', 'DRJ1PB15AX00EB', 'DRJ1PB15AX00WB']
 
     if BATCH_RUN:
         local_df = pd.read_csv(_dirs.TRIAL_MAP)
-        list_run_IDs = local_df[ local_df.columns[1] ].values
+        list_run_IDs = list(local_df[ local_df.columns[1] ].values)
+        list_run_IDs_filtered = pydal.utils.get_run_selection(
+            list_run_IDs,
+            p_type      = TYPE,
+            p_mth       = MTH,
+            p_machine   = MACHINE,
+            p_speed     = SPEED,
+            p_head      = HEAD)        
+    
+        if MANUAL_RUNS:
+            list_run_IDs_filtered  = runs_to_do
     
         overlap = _vars.OVERLAP
         window_length = _vars.T_HYD_WINDOW
@@ -423,9 +446,10 @@ if __name__ == '__main__':
         fs_hyd = _vars.FS_HYD
         range_dict = _vars.RANGE_DICTIONARY
         mistakes = _vars.OOPS_DYN
+        # mistakes = []
         
         process_h5_timeseries_to_spectrograms_from_run_list(
-            list_run_IDs,
+            list_run_IDs_filtered,
             local_df,
             fs_hyd,
             window,
