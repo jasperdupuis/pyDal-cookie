@@ -584,7 +584,7 @@ def process_batch_from_df(
         p_dir_source,
         p_dir_target,
         p_dict_range_config = _vars.RANGE_DICTIONARY):
-    
+        
     for index,row in p_df.iterrows():    
         runID = row['Run ID']
         fname_s, fname_n = filenames_from_df_row(row)
@@ -600,15 +600,28 @@ def process_batch_from_df(
                 # note that not all variable types are supported but string and int are
                 file[data_type] = data
 
+def filter_df_on_year(p_df,p_year):
+    """
+    
+    """
+    if p_year == 2020:
+        chars = r'DRF'
+    if p_year == 2019:
+        chars = r'DRJ'
+    result = local_df[local_df['Run ID'].str.contains(chars)]
+    return result
+
 
 if __name__ =='__main__':
     BATCH_RUN = True
     SINGLE_RUN = False
+    
     if BATCH_RUN:
-        local_df = pd.read_csv(_dirs.TRIAL_MAP)
-        source_dir = _dirs.DIR_BINARY_HYDROPHONE
-        target_dir = _dirs.DIR_HDF5_HYDROPHONE
-        dict_range_config = _vars.RANGE_DICTIONARY
+        local_df            = pd.read_csv(_dirs.TRIAL_MAP)
+        local_df            = filter_df_on_year(local_df,_dirs.YEAR)
+        source_dir          = _dirs.DIR_BINARY_HYDROPHONE
+        target_dir          = _dirs.DIR_HDF5_HYDROPHONE
+        dict_range_config   = _dirs.RANGE_DICTIONARY
         if not ( os.path.isdir(target_dir)) : # need to make dir if doesnt exist
             os.mkdir(target_dir)
         process_batch_from_df(local_df,source_dir,target_dir,dict_range_config)

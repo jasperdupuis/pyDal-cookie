@@ -13,22 +13,55 @@ from directories_and_files import DIR_SPETROGRAM, SUMMARY_FNAME
 DIRECTORIES
 
 """
+
+YEAR = 2020
+
 # # Data directory of interest, note there are a few different ways of making spectrograms
 
 # # The generic spectrogram directory:
 DIR_SPECTROGRAM = \
     r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\interim\spectrograms\\'
 
-# 2019 data only
-DIR_BINARY_HYDROPHONE = \
-    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\2019-Orca Ranging\Range Data Amalg\ES0451_MOOSE_OTH_DYN\RAW_TIME\\'
+if not (YEAR == 2020):
+    # 2019 data only :
+    DIR_BINARY_HYDROPHONE = \
+        r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\2019-Orca Ranging\Range Data Amalg\ES0451_MOOSE_OTH_DYN\RAW_TIME\\'
+    # 2019 data only
+    DIR_TRACK_DATA = \
+        r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\\2019-Orca Ranging\Range Data Amalg\ES0451_MOOSE_OTH_DYN\TRACKING\\'
+    DIR_HYDRO_CALS = \
+        r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\2019-Orca Ranging\Range Data Amalg\\'
+    FILE_NORTH_CAL = \
+        r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\2019-Orca Ranging/Range Data Amalg/TF_DYN_NORTH_L_40.CSV'
+    FILE_SOUTH_CAL = \
+        r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\2019-Orca Ranging/Range Data Amalg/TF_DYN_SOUTH_L_40.CSV'
+    fname_range_dict = \
+        r'C:/Users/Jasper/Documents/Repo/pyDal/pyDal-cookie/data/raw/range_info/dynamic_patbay_2019.py'
+    RANGE_DICTIONARY = dict()
+    with open(fname_range_dict,'r') as f:
+        RANGE_DICTIONARY = eval(f.read())
+
+else:# 2020 data :
+    DIR_BINARY_HYDROPHONE = \
+        r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\2020-Orca Ranging\Pat Bay Data\ES0453_MOOSE_SPC_DYN\RAW_TIME\\'
+    # 2019 data only
+    DIR_TRACK_DATA = \
+        r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\2020-Orca Ranging\Pat Bay Data\ES0453_MOOSE_SPC_DYN\TRACKING\\'    
+    DIR_HYDRO_CALS = \
+        r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\2020-Orca Ranging\Pat Bay Data\\'
+    FILE_NORTH_CAL = \
+        r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\2020-Orca Ranging\Pat Bay Data/TF_DYN_NORTH_L_40.CSV'
+    FILE_SOUTH_CAL = \
+        r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\2020-Orca Ranging\Pat Bay Data/TF_DYN_SOUTH_L_40.CSV'
+    fname_range_dict = \
+        r'C:/Users/Jasper/Documents/Repo/pyDal/pyDal-cookie/data/raw/range_info/dynamic_patbay_2020.py'
+    RANGE_DICTIONARY = dict()
+    with open(fname_range_dict,'r') as f:
+        RANGE_DICTIONARY = eval(f.read())
+
 
 DIR_HDF5_HYDROPHONE = \
     r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\interim\hydrophone_hdf5\\'
-
-# 2019 data only
-DIR_TRACK_DATA = \
-    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\\2019-Orca Ranging\Range Data Amalg\ES0451_MOOSE_OTH_DYN\TRACKING\\'
 
 DIR_HYDRO_CALS = \
     r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\2019-Orca Ranging\Range Data Amalg\\'
@@ -70,10 +103,5 @@ FNAME_SPEED_RPM = \
 
 TRIAL_MAP = \
     r'C:/Users/Jasper/Documents/Repo/pyDal/pyDal-cookie/data/raw/burnsi_files_RECONCILE_20201125.csv'
-
-FILE_NORTH_CAL = \
-    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\2019-Orca Ranging/Range Data Amalg/TF_DYN_NORTH_L_40.CSV'
-FILE_SOUTH_CAL = \
-    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\2019-Orca Ranging/Range Data Amalg/TF_DYN_SOUTH_L_40.CSV'
 
 

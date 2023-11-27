@@ -4,9 +4,17 @@ Created on Tue Sep  5 14:39:02 2023
 
 @author: Jasper
 
-Explore theta as an explanatory variable.
+Explore theta as an explanatory variable. Has been adapted to work on any x,y,theta regressor
+by using passed x or y transforms.
 
 First implemented in loop, moved to vectorized 20230911.
+
+
+    In a fully transformed cartesian x-y system:
+    North hydrophone is at (100,0)
+    South hydrophone is at (-100,0)
+    Eastbound goes from (0,100) to (0,-100)
+    Westbound goes from (0,-100) to (0,100)
 
 """
 
@@ -18,21 +26,18 @@ import matplotlib.pyplot as plt
 import time
 
 import pydal.utils
+import pydal.data_transforms
 import pydal._directories_and_files as _dirs
 import pydal._variables as _vars
 
 
-MAX_FREQ_INDEX = 2000 #random number, dont want high freq stuff
+MAX_FREQ_INDEX = 50000 #randomly chosen number, dont want high freq stuff
 DEG_TO_RAD = np.pi / 180
-# STANDARD        = r'STANAG' # uses +/- 45 degrees (i.e. no trim needed)
+STANDARD        = r'STANAG' # uses +/- 45 degrees (i.e. no trim needed)
 # STANDARD        = r'ISO'# uses +/- 30 degrees
-STANDARD        = r'HEGGERNES'# Uses +/- one shiplength
+# STANDARD        = r'HEGGERNES'# Uses +/- one shiplength
 CHECK_VECTORIZE = False
 
-
-def sine_hypothesis_model(x,A,b,phi,c): 
-    y = A * np.sin( (b*x) + phi ) + c 
-    return y 
 
 
 def array_linear_regression(regressor,p_array):
@@ -66,7 +71,7 @@ def set_range_standard(
         p_standard = r'STANAG'):
     
     if p_standard == r'STANAG':
-        print('STANAG method: no data trim required.')
+        print('STANAG method: no data trim required')
         #nothing to be done    
 
     if p_standard == r'HEGGERNES':
@@ -91,24 +96,6 @@ def set_range_standard(
     return p_x,p_y,p_gram,p_theta
 
 
-def x_transform_theta_only(x,y,theta):
-    return theta    
-
-
-def y_transform_0_mean_max_norm_arcsin(p_z):
-    """
-    Transforms array data using vectorization from passed set to:
-        zero mean
-        normed on -1,1 using np.max
-        arcsin using np.arcsin
-    """
-    z_means             = np.mean ( p_z , axis = 1)
-    interim             = p_z - z_means[:, np.newaxis]
-    z_norms             = np.max ( np.abs ( interim ) , axis = 1)
-    z_norm_arr          = interim / z_norms[:,np.newaxis]
-    z_arcsin_arr        = np.arcsin(z_norm_arr)
-    return z_arcsin_arr
-    
 
 def SLR_with_y_transform(
         p_x,
@@ -130,8 +117,8 @@ def SLR_with_y_transform(
     returns the results in a dictionary.
     """
     regressor = p_x_transform(p_x,p_y,p_theta)
-    z_lin_arcsin_arr    = p_y_transform(p_gram)
-    m,b,r,p,err         = array_linear_regression(regressor, z_lin_arcsin_arr)
+    z_arr    = p_y_transform(p_gram)
+    m,b,r,p,err         = array_linear_regression(regressor, z_arr)
     result              = dict()
     result['m']         = m
     result['b']         = b
@@ -157,29 +144,39 @@ def compute_regressor_variables(
     return n_r, s_r, n_logR, s_logR
 
 
-def SLR_single_run_with_y_transform(
+def SLR_single_run_with_var_transforms(
         p_runID,
         p_dir_spec,
-        p_x_transform = x_transform_theta_only,
-        p_y_transform = y_transform_0_mean_max_norm_arcsin,
+        p_standard = STANDARD,
+        p_x_transform = pydal.data_transforms.x_transform_theta_only,
+        p_y_transform = pydal.data_transforms.y_transform_0_mean_max_norm_arcsin,
         p_max_freq_ind  = MAX_FREQ_INDEX
         ):
     """
     It does what it says on the tin.
+    
+    p_t_start_end_percentages relates always to a //10 division of the xx and
+    yy series length, to trim the data along time axis.
+    e.g. (1,9) is //10 and (//10) * 9
     """
     # Get the data, trim frequency axis where appropriate.
     spec_dict = \
         pydal.utils.load_target_spectrogram_data(
             p_runID, p_dir_spec)
+        
     xx, yy , n_theta, s_theta = \
         spec_dict['X'],spec_dict['Y'],\
         spec_dict['North_Theta'],spec_dict['South_Theta']
     f           = spec_dict ['Frequency'] [ : p_max_freq_ind ]
-    n_gram      = spec_dict['North_Spectrogram'][ : p_max_freq_ind , : ]
-    s_gram      = spec_dict['South_Spectrogram'][ : p_max_freq_ind , : ]
+    n_gram      = spec_dict['North_Spectrogram'][ : p_max_freq_ind , :]
+    s_gram      = spec_dict['South_Spectrogram'][ : p_max_freq_ind , :]
+    
+    
+    
     if len(n_theta) > n_gram.shape[1] : 
         n_theta         = n_theta[:-1]
         s_theta         = s_theta[:-1]
+
     # Trim the time axis where appropriate, per STANDARD.
     x,y,n_gram_lin,n_theta          = set_range_standard(xx, yy, n_gram, n_theta,
                                                      p_standard = STANDARD)
@@ -205,7 +202,117 @@ def SLR_single_run_with_y_transform(
               'Frequency'       : f}
 
     return result
+
+
+def get_indices_according_to_standard(
+        p_n,
+        p_standard=STANDARD):
+    """
+    STANAG, ISO, HEGGERNES have different modulo math.
+    """
+    if p_standard == r'STANAG':
+        # print('STANAG method: no data trim required')
+        #nothing to be done    
+        return (0,p_n)
+
+    if p_standard == r'HEGGERNES':
+        # This uses +/- shiplength from CPA.
+        # The middle third is 60 < length < 70, so good enough here for ORCA.
+        m1              = p_n // 3 # start middle third
+        m3              = m1 * 2      # end middle third
+        return (m1,m3)
+
+    if p_standard == r'ISO': 
+        #should be CPA +- 57m, ~50m close enough for my work.
+        m1              = p_n // 4 # start second quarter
+        m3              = m1 * 3      # end third quarter 
+        return (m1,m3)
     
+    if p_standard == r'50m':
+        m1 = ( p_n // 8 )   # start of 2nd 8th
+        m3 = m1 * 5         # end of 5th 8th
+        m1 = m1 * 3         # start of 4th 8th.
+        return (m1,m3)
+
+
+def get_mask_array_according_to_standard(
+        p_run_lengths,
+        p_standard = STANDARD):
+    N = 0
+    for n in p_run_lengths:
+        N += n
+    mask = np.zeros( N )
+    current_run_start_index = 0
+    for n in p_run_lengths:
+        start,end = get_indices_according_to_standard(n,p_standard)
+        start += current_run_start_index + start
+        end += current_run_start_index + end
+        mask[start:end] = True
+        current_run_start_index += n      
+    mask=np.array(mask,dtype=bool) # convert from 1 and 0 to booleans
+    return mask
+
+
+def mask_data(p_dict,p_standard):
+
+    nanmask_n   = np.isfinite(np.sum(p_dict['North'],axis=0))
+    nanmask_s   = np.isfinite(np.sum(p_dict['South'],axis=0))
+    nanmask     = np.logical_or(nanmask_n,nanmask_s)
+    # nanmask all the values that are NOT nan or inf
+
+    # now the stanag / iso / heggernes criteria:
+    mask        = get_mask_array_according_to_standard(
+        p_run_lengths = p_dict['Run_Lengths'], 
+        p_standard = STANDARD)
+    mask        = np.array(mask,dtype=bool)
+
+    #   combine the two masks    
+    mask = np.logical_and(nanmask,mask)
+
+    p_dict['North']     = p_dict['North'][:,mask]
+    p_dict['South']     = p_dict['South'][:,mask]
+    p_dict['X']     = p_dict['X'][mask]
+    p_dict['Y']     = p_dict['Y'][mask]
+    p_dict['Frequency']     = p_dict['Frequency'][:_vars.INDEX_FREQ_MAX_PROCESSING]
+
+    return p_dict
+
+
+def compare_SL_nominal_vs_RL_slope_implied(
+        p_ax,
+        p_label, 
+        p_f_values,
+        p_m_values,
+        p_track_dist_m  = 200,
+        p_track_step    = 0.5,
+        p_sl_nom        = 160
+        ):
+    """
+    Calculate the difference between a "true" source level p_sl_nom,
+    and what that same SL subjected to the slopes observed in the batched
+    SLR approach.
+    """
+    track_steps     = np.arange(p_track_dist_m / p_track_step) 
+    track_steps     -= (len(track_steps) // 2 )
+    track_steps     *= p_track_step
+    track_steps     = np.reshape(track_steps,( len ( track_steps) , 1 ) )
+    slope_per_100m  = np.reshape(p_m_values, ( 1 , len ( p_m_values)))
+
+    tl_var          = np.multiply(track_steps,slope_per_100m)
+
+    # now, create what the RL would be while accounting for the 
+    # linear TL variation model.
+    rl              = p_sl_nom + tl_var
+    rl_lin          = _vars.REF_UPA * (10 ** ( ( rl / 10 )))
+    rl_lin_mean     = np.mean(rl_lin,axis=0)
+    rl_db_mean      = 10*np.log10(rl_lin_mean / _vars.REF_UPA)
+    
+    delta       = rl_db_mean - p_sl_nom
+    p_ax.plot( p_f_values , delta , label=p_label) ; 
+    
+    return p_ax, p_sl_nom,rl_db_mean
+
+
 if __name__ == '__main__':
     
     dir_spec_subdir = pydal.utils.create_dirname_spec_xy(
@@ -214,19 +321,33 @@ if __name__ == '__main__':
         _vars.OVERLAP
         )
     p_dir_spec      = _dirs.DIR_SPECTROGRAM + dir_spec_subdir + '\\'
-    run_list = pydal.utils.get_all_runs_in_dir(p_dir_spec)
-    runID = run_list[10]
-    
-    start = time.time()
+    run_list        = pydal.utils.get_all_runs_in_dir(p_dir_spec)
+    p_head          = 'W'
+    p_speed         = 'X'
+    run_list        = pydal.utils.get_run_selection(
+        run_list,
+        p_type='DR',
+        p_mth='J',
+        p_machine = 'X',
+        p_speed = p_speed,
+        p_head = p_head)    
     
     """
     The null hypothesis is slope = 0 when using theta to predict y
     (Run for both linear and db)
     Small p ==> reject null hypothesis.
     """
+    start = time.time()
     results = dict()
     for r in run_list:
-        run_result = SLR_single_run_with_y_transform(r,p_dir_spec)    
+        run_result = SLR_single_run_with_var_transforms(
+            r,
+            p_dir_spec,
+            p_standard = STANDARD,
+            p_x_transform = pydal.data_transforms.x_transform_y_only,
+            p_y_transform = pydal.data_transforms.y_transform_0_mean,
+            p_max_freq_ind  = MAX_FREQ_INDEX
+            )    
         results[r] = run_result
     end = time.time()
     print('time elapsed:\t' + str(end-start) )
@@ -238,16 +359,33 @@ if __name__ == '__main__':
     
     n_p_db  = np.zeros(MAX_FREQ_INDEX)
     n_p_lin = np.zeros(MAX_FREQ_INDEX)
+    s_p_db  = np.zeros(MAX_FREQ_INDEX)
+    s_p_lin = np.zeros(MAX_FREQ_INDEX)
     x = []
     for key,value in results.items():
-        n_p_db      += value['North_Decibel']['p'] 
-        n_p_lin     += value['North_Linear']['p']
+        s_p_db      += value['South_Decibel']['m'] 
+        s_p_lin     += value['South_Linear']['m']
+        n_p_db      += value['North_Decibel']['m'] 
+        n_p_lin     += value['North_Linear']['m']
         # x.append (value['North_Linear']['p'])
+    # Average the results based on number of entries:
     n_p_db      = n_p_db / len(results.keys())
     n_p_lin     = n_p_lin / len(results.keys())
-    
-    plt.figure(); plt.plot(run_result['Frequency'],n_p_lin);plt.xscale('log');plt.title('Linear arcsin p-value \nNorth, ' + STANDARD + ', averaged'  )
-    plt.figure(); plt.plot(run_result['Frequency'],n_p_db);plt.xscale('log');plt.title('Decibel arcsin p-value \nNorth, ' + STANDARD + ', averaged' )
+    s_p_db      = s_p_db / len(results.keys())
+    s_p_lin     = s_p_lin / len(results.keys())
+
+    # South hydrophone    
+    #linear
+    # plt.figure(); plt.plot(run_result['Frequency'],s_p_lin);plt.xscale('log');plt.title('Linear m-value for H_0 zero slope \nSouth, ' + STANDARD + ', averaged'  )
+    # decibel
+    plt.figure(); plt.plot(run_result['Frequency'],s_p_db);plt.xscale('log');plt.title('Decibel m-value for H_0 zero slope \nSouth, ' + STANDARD + ', averaged' )
+
+    # North hydrophone
+    #linear
+    # plt.figure(); plt.plot(run_result['Frequency'],n_p_lin);plt.xscale('log');plt.title('Linear m-value for H_0 zero slope \nNorth, ' + STANDARD + ', averaged'  )
+    # decibel
+    plt.figure(); plt.plot(run_result['Frequency'],n_p_db);plt.xscale('log');plt.title('Decibel m-value for H_0 zero slope \nNorth, ' + STANDARD + ', averaged' )
+
     
     
     # A recipe for better sine model to estimate params for from the example at :
@@ -258,15 +396,20 @@ if __name__ == '__main__':
     
     
     # For future debugging needs only, will use vectorized going forward.
+    # There are code errors below, variable names.
     if CHECK_VECTORIZE: 
         freqindex = 71 # the particular freq bin to investigate to verify vectorization operations
         # f[71] # f[71] == 73.0 Hz, has interesting features shown at committee.
         index = freqindex
         
-        # Compute using vectorized method:
-        # z_db_arcsin_arr_sel  = 
-        # z_lin_arcsin_arr_sel = 
-        
+        spec_dict   = \
+            pydal.utils.load_target_spectrogram_data(
+                run_list[0], p_dir_spec)
+        n_gram      = spec_dict [ 'North_Spectrogram' ]
+        n_gram_lin  = n_gram
+        n_gram_db   = 10*np.log10(n_gram)
+        n_theta     = spec_dict [ 'North_Theta' ]
+            
         # Do the linear work first:
         n_spectral_time_series      = n_gram[index,:]
         z_db                        = 10 * np.log10( n_spectral_time_series ) 
@@ -312,8 +455,8 @@ if __name__ == '__main__':
         Select and plot the arcsin timeseries, calculated using
         vectorization.
         """    
-        z_db_arcsin_arr_sel   = y_transform_0_mean_max_norm_arcsin(n_gram_db)[index,:]
-        z_lin_arcsin_arr_sel  = y_transform_0_mean_max_norm_arcsin(n_gram_lin)[index,:]
+        z_db_arcsin_arr_sel   = pydal.data_transforms.y_transform_0_mean_max_norm_arcsin(n_gram_db)[index,:]
+        z_lin_arcsin_arr_sel  = pydal.data_transforms.y_transform_0_mean_max_norm_arcsin(n_gram_lin)[index,:]
         
         fig, ax1 = plt.subplots()
         ax2 = ax1.twinx()

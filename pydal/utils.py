@@ -8,6 +8,7 @@ Created on Fri Mar 17 14:54:52 2023
 import os
 import h5py as h5
 import numpy as np
+import pickle
 
 import pydal.utils
 import pydal._directories_and_files as _dirs
@@ -15,11 +16,13 @@ import pydal._variables as _vars
 
 import math
 
+
 def rotate(x,y,theta,xo=0,yo=0): 
     #rotate x,y around xo,yo by theta (rad)
     xr=math.cos(theta)*(x-xo)-math.sin(theta)*(y-yo)   + xo
     yr=math.sin(theta)*(x-xo)+math.cos(theta)*(y-yo)  + yo
     return xr,yr
+
 
 def create_dirname_spec_xy(p_fs,p_win_length,p_overlap_fraction):
     """
@@ -52,6 +55,7 @@ def create_dirname_spec_xy(p_fs,p_win_length,p_overlap_fraction):
 
     return dirname
 
+
 def get_all_runs_in_dir(
         p_dir):
     """
@@ -62,15 +66,19 @@ def get_all_runs_in_dir(
     runs = [x for x in runs if x[:2] == 'DR']
     return runs
 
+
 def get_run_selection( 
         p_list_runs,
         p_type = 'DR',
         p_mth = 'J',
         p_machine = 'A',
         p_speed = '05',
-        p_head = 'X'): #X means both
+        p_head = 'X',
+        p_beam = 'B'): #X means both
     """
     Get an unordered list of runs based on simple criteria and return it
+    
+    Beam can be N, S, or B. B is the most common by far.
     """
     result = []
     
@@ -80,6 +88,7 @@ def get_run_selection(
         mach        = False
         speed       = False
         head        = False
+        beam        = False
 
         # Type selection
         if (p_type not in runID[:2]): 
@@ -109,7 +118,13 @@ def get_run_selection(
         elif (p_head in runID[12]): 
             head = True
             
-        if typeof and mth and mach and speed and head:
+        # Beam vs keel aspect selection
+        if p_beam == 'X':
+            beam = True
+        elif (p_beam in runID[-1]):
+            beam = True
+            
+        if typeof and mth and mach and speed and head and beam:
             result.append(runID)
         
     return result
@@ -129,6 +144,7 @@ def get_hdf5_hydrophones_file_as_dict(
         result[key] = h[key][:]
     h.close()
     return result
+
 
 def _h5_key_value_to_dictionary(dictionary,hdf5):
     """
@@ -168,6 +184,12 @@ def get_spectrogram_file_as_dict(
     if len( result['North_Spectrogram_Time'] ) < len(result['X']): 
         # trim the last xy to make t_n fit.
         result['X'],result['Y'] = result['X'][:-1],result['Y'][:-1]
+    
+    if len( result['X'] ) < len ( result [ 'North_Spectrogram_Time' ] ): 
+        # trim the last xy to make t_n fit.
+        result['South_Spectrogram'] = result['South_Spectrogram'] [:,:-1]
+        result['North_Spectrogram'] = result['North_Spectrogram'] [:,:-1]
+    
     
     if p_rotation_rad == 0 : 
         x = 1 # Do nothing
@@ -232,6 +254,7 @@ def load_hdf5_file_to_dict(p_fname):
 
     return result
 
+
 def load_target_spectrogram_data(
         p_runID,
         p_data_dir):
@@ -249,11 +272,6 @@ def load_target_spectrogram_data(
            result['South_Spectrogram']      = file['South_Spectrogram'][:]
            result['South_Spectrogram_Time'] = file['South_Spectrogram_Time'][:]
            result['Frequency']              = file['Frequency'][:]
-           # BELOW NOT FUTURE PROOF, CHANGED 'Theta North' To 'North_Theta' in 
-           # script #015 to be  consistent AFTER generation of 
-           # data files 2023 09 01.
-           result['North_Theta']            = file['Theta North'][:] * _vars.DEG_TO_RAD
-           result['South_Theta']            = file['Theta South'][:] *_vars.DEG_TO_RAD
            if 'AM' not in p_runID :
                result['X'] = file['X'][:]
                result['Y'] = file['Y'][:]
@@ -263,8 +281,24 @@ def load_target_spectrogram_data(
            print (p_runID + ' didn\'t work')
            print (p_runID + ' will have null entries')
        return result
-       
-   
+    
+def load_target_spectrogram_data_with_theta_phi(p_runID,p_data_dir):
+    """
+    For the case where want to load theta as well as xy data.
+    """
+    result = load_target_spectrogram_data(p_runID,p_data_dir)
+    fname = p_data_dir + '\\' + p_runID + r'_data_timeseries.hdf5'           
+    with h5.File(fname, 'r') as file:
+        # BELOW NOT FUTURE PROOF, CHANGED 'Theta North' To 'North_Theta' in 
+        # script #015 to be  consistent AFTER generation of 
+        # data files 2023 09 01.
+        # result['North_Theta']            = file['Theta North'][:] * _vars.DEG_TO_RAD
+        # result['South_Theta']            = file['Theta South'][:] *_vars.DEG_TO_RAD
+        result['North_Theta']            = file['Theta North'][:] * _vars.DEG_TO_RAD
+        result['South_Theta']            = file['Theta South'][:] *_vars.DEG_TO_RAD
+    return result
+    
+
 def insert_hydro_RAM_TL_to_spec_dictionary_from_file(
         p_hydro,
         p_spec_dict,
@@ -296,3 +330,62 @@ def get_gram_XY_index_by_distToCPA(
     end_index = 2 * start_index
     return start_index, end_index
 
+
+def get_fully_qual_spec_path():
+    """
+    Void function as only requires macro definitions from _vars and _dirs
+    """
+    dir_spec_subdir = pydal.utils.create_dirname_spec_xy(
+        _vars.FS_HYD,
+        _vars.T_HYD_WINDOW * _vars.FS_HYD,
+        _vars.OVERLAP
+        )
+    p_dir_spec      = _dirs.DIR_SPECTROGRAM + dir_spec_subdir + '\\'
+    run_list        = pydal.utils.get_all_runs_in_dir(p_dir_spec)
+    return p_dir_spec,run_list
+
+
+def dump_pickle_file(
+        p_dictionary_data,
+        p_data_dir,
+        p_fname):
+    fname = p_data_dir + p_fname
+    with open( fname, 'wb' ) as file:
+        pickle.dump( p_dictionary_data, file )
+        
+        
+def load_pickle_file(
+        p_data_dir,
+        p_fname):
+    fname = p_data_dir + p_fname
+    with open( fname, 'rb' ) as file:
+        result = pickle.load( file )
+    return result
+
+
+def get_max_index(xx,yy,ss,nn):
+    """
+    Do a thorough check of time-base equivalence.
+    Provide new index maximum if appropriate
+    
+    xx,yy are integers representing 1-D array lengths
+    ss,nn are tuples (a,b) representing 2d array shape
+    
+    trimming is done using the result of this function.
+    """
+    if not ( xx == yy ):
+        print('Error in check_sizes, x and y axis different lengths!')
+        return 0
+    if not ( ss == nn ) :
+        print('Error in check_sizes, ss and nn different shapes!')
+        return 0
+    if ( xx == nn[1] ) and ( xx == ss[1] ) :
+        # Everything is good, just return xx (length of x) for indexing.
+        return xx    
+    if ( xx < nn[1] ) and ( xx < ss[1] ):
+        # Need to truncate nn and ss to fit xx
+        return xx
+    if ( xx > nn[1] ) and ( xx > ss[1] ):
+        # Need to truncate xx and yy to fit ss and nn
+        return nn[1]
+    

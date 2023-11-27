@@ -161,7 +161,7 @@ def load_and_display_run_freq_TLRL(
 
 if __name__ == '__main__':
     RUNID       = r'DRJ3PB19AX01EB'
-    FREQ        = 227
+    FREQ        = 313
     N_KERNEL = 15
     HYDRO = _vars.HYDROPHONE
     LOCATION = _vars.LOCATION

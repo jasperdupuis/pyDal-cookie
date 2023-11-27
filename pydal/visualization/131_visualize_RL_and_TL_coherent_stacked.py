@@ -22,10 +22,11 @@ import pydal._directories_and_files as _dirs
 
 PLOT_TL = False
 
-N_AVE           = 11 #for a smoothing window
-p_freq          = 11
+N_AVE           = 3 #for a smoothing window
+p_freq          = 40
 # p_hydro         = _vars.HYDROPHONE
-p_hydro         = 'SOUTH'
+p_hydro         = 'NORTH'
+# p_hydro         = 'NORTH'
 p_dist_to_CPA   = _vars.DIST_TO_CPA
 p_location      = _vars.LOCATION
 p_dir_spec      = _dirs.DIR_SPECTROGRAM
@@ -48,8 +49,7 @@ freq_index        = pydal.utils.find_target_freq_index(p_freq, f_basis)
 
 
 # Result concatenation
-# hydro   = p_hydro.capitalize()
-hydro   = 'North'
+hydro   = p_hydro.capitalize()
 x       = []
 y       = []
 t       = []
@@ -58,30 +58,29 @@ TL      = []
 runs    = []
 for runID in run_list:
     gram_dict,N       = pydal.utils.get_spectrogram_file_as_dict(runID, dir_spec)
-    t.append(gram_dict[ hydro + '_Spectrogram_Time'])
-    TL.append(gram_dict[ hydro + '_RAM_TL_interpolations'][str(p_freq).zfill(4)])
-    rx = 10*np.log10(gram_dict[ hydro +'_Spectrogram'][ freq_index , : ]/_vars.REF_UPA)
-    # RL.append(rx - np.mean(rx))
-    RL.append(rx)
-    runs.append(runID)
-    break
+    try:
+        t.append(gram_dict[ hydro + '_Spectrogram_Time'])
+        TL.append(gram_dict[ hydro + '_RAM_TL_interpolations'][str(p_freq).zfill(4)])
+        rx = 10*np.log10(gram_dict[ hydro +'_Spectrogram'][ freq_index , : ]/_vars.REF_UPA)
+        # RL.append(rx - np.mean(rx))
+        RL.append(rx)
+        runs.append(runID)
+        break
+    except:
+        print(runID + ' \t did not have RAM_TL_interpolations')
+        continue
 
-# # Try looking at just one run
-# index = 10
-# fig, axs = plt.subplots(2)
-# fig.suptitle('RL and TL for ' + str(p_freq) + ' Hz, \n Run: '+runs[index])
-# run,time,loss,rx = runs[index],t[index],TL[index],RL[index]
-# R = time - np.mean(time)
-# R  = R / np.max(R)
-# R = R * 141
-# if run[-2] == 'E': #Flip eastboudn runs.
-#     R = R [::-1]
-# if len(time) == len (loss):
-#     axs[0].plot( R , rx , label = run )
-#     axs[1].plot( R , loss , label = run )
-# if len(time) < len(loss):
-#     axs[0].plot( R , rx , label = run )
-#     axs[1].plot( R , loss[:-1] , label = run )
+# Try looking at just one run
+index = 0
+fig, axs = plt.subplots(2)
+fig.suptitle(hydro + ' RL and TL for ' + str(p_freq) + ' Hz, \n Run: '+runs[index])
+run,time,loss,rx = runs[index],t[index],TL[index],RL[index]
+R = time - np.mean(time)
+R  = R / np.max(R)
+R = R * 141
+axs[0].plot(  rx , label = run )
+axs[1].plot(  loss , label = run )
+
 
 # # Histogram an entire frequency bin
 # # db domain:
@@ -100,34 +99,34 @@ for runID in run_list:
 # plt.figure() ; plt.hist(lin_all,bins=50,density=True) ; plt.hist(dist_lin,bins=50,density=True)
 
 # N_AVE=71
-ave_kernel = np.ones( N_AVE ) / N_AVE
-fig, axs = plt.subplots(2)
-fig.suptitle('Westbound RL and TL for ' + str(p_freq) + ' Hz\n' + hydro + ' hydrophone')
-for run,time,loss,rx in zip(runs,t,TL,RL):
-    rx = rx - np.mean(rx)
-    rx = np.convolve( rx , ave_kernel , mode='same')
-    Y = time - np.mean(time)
-    Y = Y / np.max(Y) 
-    Y = Y * 100
-    if run[-2] == 'E': # Special treatment for eastbound runs - typical to flip or ignore them.
-        # skip them
-        # continue
-        rx = rx [::-1]
-    if len(time) == len (loss):
-        axs[0].plot( Y , rx )#, label = run )
-        axs[1].plot( Y , loss )#, label = run )
-    if len(time) < len(loss):
-        axs[0].plot( Y , rx )#, label = run )
-        axs[1].plot( Y , loss[:-1] )#, label = run )
-axs[0].axhline(0,linewidth=2) # zero mean line
-R = np.sqrt(Y**2 + 100 ** 2) # distance to hydrophone (nominal)
-logR = 20 * np.log10(R)
-zero_logR = logR - 40
-axs[0].plot ( Y, -1*zero_logR,linewidth=3,label = 'Zero mean of -20logR') # zero mean 20logR model
-axs[0].set_ylabel('Zero-mean RL (dB)')
-axs[1].set_ylabel('RAM TL (dB)')
-fig.supxlabel('Distance from CPA (m)')
-axs[0].legend()
+# ave_kernel = np.ones( N_AVE ) / N_AVE
+# fig, axs = plt.subplots(2)
+# fig.suptitle('Westbound RL and TL for ' + str(p_freq) + ' Hz\n' + hydro + ' hydrophone')
+# for run,time,loss,rx in zip(runs,t,TL,RL):
+#     rx = rx - np.mean(rx)
+#     rx = np.convolve( rx , ave_kernel , mode='same')
+#     Y = time - np.mean(time)
+#     Y = Y / np.max(Y) 
+#     Y = Y * 100
+#     if run[-2] == 'E': # Special treatment for eastbound runs - typical to flip or ignore them.
+#         # skip them
+#         # continue
+#         rx = rx [::-1]
+#     if len(time) == len (loss):
+#         axs[0].plot( Y , rx )#, label = run )
+#         axs[1].plot( Y , loss )#, label = run )
+#     if len(time) < len(loss):
+#         axs[0].plot( Y , rx )#, label = run )
+#         axs[1].plot( Y , loss[:-1] )#, label = run )
+# axs[0].axhline(0,linewidth=2) # zero mean line
+# R = np.sqrt(Y**2 + 100 ** 2) # distance to hydrophone (nominal)
+# logR = 20 * np.log10(R)
+# zero_logR = logR - 40
+# axs[0].plot ( Y, -1*zero_logR,linewidth=3,label = 'Zero mean of -20logR') # zero mean 20logR model
+# axs[0].set_ylabel('Zero-mean RL (dB)')
+# axs[1].set_ylabel('RAM TL (dB)')
+# fig.supxlabel('Distance from CPA (m)')
+# axs[0].legend()
 
 
 

@@ -11,6 +11,32 @@ import numpy as np
 import os
 
 """
+RUN SELETION VARIABLES
+"""
+
+# An ambient run from July 2019
+# TYPE = 'AM'
+# MTH = 'J'
+# STATE = 'X'
+# SPEED='00'        
+# HEADING = 'X' #X means both
+
+# A set of dynamic run parameters from July 2019.
+# TYPE = 'DR'
+# MTH = 'J'
+# STATE = 'A'
+# SPEED='X'        
+# HEADING = 'X' #X means both
+
+# A set of dynamic run parameters from Feb 2020.
+TYPE = 'DR'
+MTH = 'F'
+STATE = 'A'
+SPEED='X'        
+HEADING = 'X' #X means both
+
+
+"""
 MATH / PHYSICS VARIABLES
 """
 DEG_TO_RAD = np.pi / 180 
@@ -41,16 +67,26 @@ TRIAL VARIABLES
 
 """
 FS_HYD = 204800
-T_HYD = 1 #window length in seconds
-T_HYD_WINDOW = T_HYD
 FS_GPS = 10
 LABEL_COM = 'COM '
 LABEL_FIN = 'FIN '
-OVERLAP = 0.9
-
 F_MIN_HYD = 2
 F_MAX_HYD = 85000 # reduce datasets a bit, limit is 90k in calibrations.
 REF_UPA = 0.000001
+
+
+"""
+
+DSP PROCSESING VARIABLES ONLY
+
+"""
+
+T_HYD = 1 #window length in seconds, 1Hz bw
+# T_HYD = 0.1 #window length in seconds, 10Hz bw
+T_HYD_WINDOW = T_HYD
+OVERLAP = 0.9
+# OVERLAP = 00
+
 
 """
 
@@ -64,12 +100,7 @@ LOCATION = 'Patricia Bay'
 
 RAM_RESULTS_POINT_OR_LINE = 'POINT'
 
-fname_range_dict = \
-    r'C:/Users/Jasper/Documents/Repo/pyDal/pyDal-cookie/data/raw/range_info/dynamic_patbay_2019.py'
 
-RANGE_DICTIONARY = dict()
-with open(fname_range_dict,'r') as f:
-    RANGE_DICTIONARY = eval(f.read())
 
 """
 
@@ -94,20 +125,6 @@ NUM_DAY = '3' #all results will filter on trial day number.
 
 DIST_TO_CPA = 33
 
-# An ambient run from July 2019
-# TYPE = 'AM'
-# MTH = 'J'
-# STATE = 'X'
-# SPEED='00'        
-# HEADING = 'X' #X means both
-
-# A set of dynamic run parameters from July 2019.
-TYPE = 'DR'
-MTH = 'J'
-STATE = 'A'
-SPEED='17'        
-HEADING = 'X' #X means both
-
 DAY = TYPE + MTH + NUM_DAY #AMJ3, DRF1, etc.
 
 # These are for 0.1 s windows
@@ -118,6 +135,9 @@ DAY = TYPE + MTH + NUM_DAY #AMJ3, DRF1, etc.
 INDEX_FREQ_LOW = 3
 INDEX_FREQ_HIGH = 89999 #90k cutoff
 
+INDEX_FREQ_MAX_PROCESSING = 10000 # as a practical matter don't want all data. 
+# This should be ~10kHz, rough limit of accelerometers.
+
 """
 Tracking of various kinds of lists of runs:
 """
@@ -127,14 +147,18 @@ OOPS_DYN = ['DRJ3PB15AX00EN', # There are no track files for these runs.
         'DRJ3PB15AX00WN',
         'DRJ3PB17AX00EN',
         'DRJ3PB17AX00WN',
-        # 'DRJ3PB05AX02EB', # These runs generate hdf5 files with 0 size, but don't fail processing somehow.
-        # 'DRJ2PB11AX01WB',
-        # 'DRJ1PB05BX00WB',
-        # 'DRJ1PB19AX00EB',
-        # 'DRJ1PB05AX00EB', 'DRJ1PB05AX00WB', 'DRJ1PB07AX00EB', #Fucked these up with track overwrite.
-        # 'DRJ1PB07AX00WB', 'DRJ1PB09AX00EB', 'DRJ1PB09AX00WB',
-        # 'DRJ1PB11AX00EB', 'DRJ1PB11AX00WB', 'DRJ1PB13AX00EB',
-        # 'DRJ1PB13AX00WB', 'DRJ1PB15AX00EB', 'DRJ1PB15AX00WB'
+        'DRF1PB13AA00WB', # doesnt batch
+        'DRF1PB17AA00WB', # doesnt batch
+        'DRF1PB17AA00EB', # doesnt batch
+        'DRF1PB13AA01WB', # something is empty in this run
+        'DRF1PB03AA01EB', # doesnt batch
+        'DRF2PB13AA02WB', # something is empty in this run
+        'DRF2PB05AA00WN', # doesn't batch
+        'DRF2PB07AA00WN', # something is empty in this run
+        'DRF2PB05AA00ES', # something is empty in this run
+        'DRF5PB05AJ00WN', # something is empty in this run
+        'DRF5PB05AJ00EB', # doesn't batch
+        'DRF1PB03AA00EB', # Fucking milk run, thanks range dudes.
         ] 
 
 

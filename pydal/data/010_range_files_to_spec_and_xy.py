@@ -123,7 +123,7 @@ def get_and_interpolate_calibrations(
         p_fs_hyd = _vars.FS_HYD,
         p_window_t = _vars.T_HYD,
         p_dir_calibrations = _dirs.DIR_HYDRO_CALS,
-        p_range_dictionary = _vars.RANGE_DICTIONARY
+        p_range_dictionary = _dirs.RANGE_DICTIONARY
         ):
     """
     Interpolate range calibration file from its home frequency basis
@@ -200,9 +200,14 @@ def apply_calibrations_to_spectrogram(p_gram_f,
     while len ( p_target_freq_basis )  > max_index - min_index:
         max_index += 1
     # Add 1 to above to align p_gram_f and p_target_freq_basis in multiplication below
-    gram = 10*np.log10( p_gram [min_index:max_index,:])
-    gram = p_cal + gram.T # range fuckup, converts from V^2 / hz to uPa^2 / hz
-    gram = p_ref_value * ( 10 ** ( gram / 10 ) ) 
+    # gram = 10*np.log10( p_gram [min_index:max_index,:])    
+    # gram = p_cal + gram.T # range fuckup, converts from V^2 / hz to uPa^2 / hz
+    # gram = p_ref_value * ( 10 ** ( gram / 10 ) ) 
+    
+    # do it all in linear domain:
+    cal = p_ref_value * ( 10 ** ( p_cal / 10))
+    gram = p_gram [min_index:max_index,:]
+    gram = p_cal * gram.T
     return gram.T
 
 
@@ -300,7 +305,7 @@ def process_h5_timeseries_to_spectrograms_from_run_list(
     p_fs_hyd = _vars.FS_HYD,
     p_window = np.hanning( _vars.FS_HYD * _vars.T_HYD ),
     p_overlap_fraction = _vars.OVERLAP,
-    p_range_dictionary = _vars.RANGE_DICTIONARY,
+    p_range_dictionary = _dirs.RANGE_DICTIONARY,
     p_trial_search = 'DRJ',
     p_hydro_dir = _dirs.DIR_HDF5_HYDROPHONE,
     p_track_dir = _dirs.DIR_TRACK_DATA,
@@ -326,8 +331,7 @@ def process_h5_timeseries_to_spectrograms_from_run_list(
     # the calibrations get applied in linear space.
     
     for runID in p_list_run_IDs:
-        if not (p_trial_search == runID[:3]): 
-            continue #only want provided data initiator (SRJ, DRJ, AMJ, etc).
+        print(runID)
         if runID in p_mistakes : 
             continue #I  made some mistakes... must reload these trk files properly later
         fname_hdf5 = target_dir + r'\\'+ runID + r'_data_timeseries.hdf5'           
@@ -415,7 +419,7 @@ if __name__ == '__main__':
     SINGLE_RUN  = False
 
     TYPE    = 'DR'
-    MTH     = 'J' # J is 2019, F is 2020
+    MTH     = 'F' # J is 2019, F is 2020
     MACHINE = 'X'
     SPEED   = 'X'
     HEAD    = 'X'
@@ -444,7 +448,7 @@ if __name__ == '__main__':
         
         window = np.hanning(_vars.FS_HYD * window_length)
         fs_hyd = _vars.FS_HYD
-        range_dict = _vars.RANGE_DICTIONARY
+        range_dict = _dirs.RANGE_DICTIONARY
         mistakes = _vars.OOPS_DYN
         # mistakes = []
         
@@ -455,7 +459,6 @@ if __name__ == '__main__':
             window,
             overlap,
             range_dict,
-            p_trial_search = 'DRJ',
             p_hydro_dir = _dirs.DIR_HDF5_HYDROPHONE,
             p_track_dir = _dirs.DIR_TRACK_DATA,
             p_mistakes = mistakes)
