@@ -258,24 +258,26 @@ def mask_data(p_dict,p_standard):
     nanmask_n   = np.isfinite(np.sum(p_dict['North'],axis=0))
     nanmask_s   = np.isfinite(np.sum(p_dict['South'],axis=0))
     nanmask     = np.logical_or(nanmask_n,nanmask_s)
-    # nanmask all the values that are NOT nan or inf
+    # nanmask is all the values that are NOT nan or inf, i.e. i want those.
 
     # now the stanag / iso / heggernes criteria:
     mask        = get_mask_array_according_to_standard(
         p_run_lengths = p_dict['Run_Lengths'], 
         p_standard = STANDARD)
     mask        = np.array(mask,dtype=bool)
+    #this mask is allthe time steps that meet the track criteria, i.e. i want those
 
-    #   combine the two masks    
+    #   combine the two masks. Must meet BOTH criteria ==> use AND
     mask = np.logical_and(nanmask,mask)
 
-    p_dict['North']     = p_dict['North'][:,mask]
-    p_dict['South']     = p_dict['South'][:,mask]
-    p_dict['X']     = p_dict['X'][mask]
-    p_dict['Y']     = p_dict['Y'][mask]
-    p_dict['Frequency']     = p_dict['Frequency'][:_vars.INDEX_FREQ_MAX_PROCESSING]
+    res_dict               = dict()
+    res_dict ['North']     = p_dict['North'][:,mask]
+    res_dict ['South']     = p_dict['South'][:,mask]
+    res_dict ['X']         = p_dict['X'][mask]
+    res_dict ['Y']         = p_dict['Y'][mask]
+    res_dict ['Frequency'] = p_dict['Frequency'][:_vars.INDEX_FREQ_MAX_PROCESSING]
 
-    return p_dict
+    return res_dict
 
 
 def compare_SL_nominal_vs_RL_slope_implied(
@@ -285,7 +287,9 @@ def compare_SL_nominal_vs_RL_slope_implied(
         p_m_values,
         p_track_dist_m  = 200,
         p_track_step    = 0.5,
-        p_sl_nom        = 160
+        p_sl_nom        = 160,
+        p_color         = 'black',
+        p_linestyle     ='--'
         ):
     """
     Calculate the difference between a "true" source level p_sl_nom,
@@ -308,9 +312,25 @@ def compare_SL_nominal_vs_RL_slope_implied(
     rl_db_mean      = 10*np.log10(rl_lin_mean / _vars.REF_UPA)
     
     delta       = rl_db_mean - p_sl_nom
-    p_ax.plot( p_f_values , delta , label=p_label) ; 
+    p_ax.plot( p_f_values , 
+              delta , 
+              color = p_color,
+              label=p_label, 
+              linestyle = p_linestyle,
+              linewidth=0.7) ; 
     
     return p_ax, p_sl_nom,rl_db_mean
+
+
+def load_concat_arrays(
+    p_fname         =  'concatenated_data.pkl'
+    ):
+    dir_spec , _    =  pydal.utils.get_fully_qual_spec_path()
+    result          = pydal.utils.load_pickle_file(
+        dir_spec,
+        p_fname)
+    print(result['Runs'])
+    return result
 
 
 if __name__ == '__main__':

@@ -30,7 +30,7 @@ RUN SELETION VARIABLES
 
 # A set of dynamic run parameters from Feb 2020.
 TYPE = 'DR'
-MTH = 'F'
+MTH = 'J'
 STATE = 'A'
 SPEED='X'        
 HEADING = 'X' #X means both
@@ -81,11 +81,11 @@ DSP PROCSESING VARIABLES ONLY
 
 """
 
-T_HYD = 1 #window length in seconds, 1Hz bw
-# T_HYD = 0.1 #window length in seconds, 10Hz bw
+# T_HYD = 1 #window length in seconds, 1Hz bw
+T_HYD = 0.1 #window length in seconds, 10Hz bw
 T_HYD_WINDOW = T_HYD
-OVERLAP = 0.9
-# OVERLAP = 00
+# OVERLAP = 0.9
+OVERLAP = 00
 
 
 """
@@ -121,7 +121,7 @@ RUN VARIABLES
 """
 FREQS = 10 + np.arange(190)
 TARGET_FREQ = 15
-NUM_DAY = '3' #all results will filter on trial day number.
+NUM_DAY = '1' #all results will filter on trial day number.
 
 DIST_TO_CPA = 33
 

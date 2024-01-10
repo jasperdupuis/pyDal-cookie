@@ -23,7 +23,7 @@ import pydal._directories_and_files as _dirs
 PLOT_TL = False
 
 N_AVE           = 3 #for a smoothing window
-p_freq          = 40
+p_freq          = 55
 # p_hydro         = _vars.HYDROPHONE
 p_hydro         = 'NORTH'
 # p_hydro         = 'NORTH'

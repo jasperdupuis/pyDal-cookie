@@ -119,21 +119,23 @@ def scatter_selected_data_single_f(
                 if p_hyd == 'NORTH':
                     ax = scatter_time_series(t_n, samp_n, ax, label=runID)
                     t_n = t_n-np.min(t_n)
-                    plt.axvline( t_n [ index_cpa ] )
+                    # plt.axvline( t_n [ index_cpa ] )
             
                 if p_hyd == 'SOUTH':
                     ax = scatter_time_series(t_s, samp_s, ax, label=runID)
                     t_s = t_s-np.min(t_s)
-                    plt.axvline( t_s [ index_cpa ] )
+                    # plt.axvline( t_s [ index_cpa ] )
                     
             if p_type =='AM' :
                 if p_hyd == 'NORTH':
-                    ax = scatter_time_series(t_n, samp_n, ax, label=runID)
-                    t_n = t_n-np.min(t_n)
+                    ax.axhline(np.mean(samp_n))
+                    # ax = scatter_time_series(t_n, samp_n, ax, label=runID)
+                    # t_n = t_n-np.min(t_n)
                     
                 if p_hyd == 'SOUTH':
-                    ax = scatter_time_series(t_s, samp_s, ax, label=runID)
-                    t_s = t_s-np.min(t_s)
+                    ax.axhline(np.mean(samp_s))
+                    # ax = scatter_time_series(t_s, samp_s, ax, label=runID)
+                    # t_s = t_s-np.min(t_s)
                     
         if p_ambients_bool:
             ax = plot_ambient_level_single_f(ax)
@@ -147,10 +149,9 @@ if __name__ == '__main__':
     fs = _vars.FS_HYD
     window = np.hanning( fs * _vars.T_HYD_WINDOW)
     
-    dirname = pydal.utils.create_dirname(
-        fs, len(window), overlap)
+    dirname,runlist = pydal.utils.get_fully_qual_spec_path()
     
-    full_data_path = _dirs.DIR_SPECTROGRAM + dirname + r'\\'
+    full_data_path=  dirname 
     runs = pydal.utils.get_all_runs_in_dir(
         full_data_path )
     
@@ -159,7 +160,7 @@ if __name__ == '__main__':
         full_data_path,
         _vars.TYPE,
         _vars.TARGET_FREQ,
-        _vars.DAY,
+        'DRJ3',
         _vars.SPEED,
         _vars.HYDROPHONE,
         p_decibel_bool = True,

@@ -24,8 +24,8 @@ GENERATE_DATA   = False
 LOAD_DATA       = False
 SINGLE_YEAR     = False
 COMPARE_YEARS   = True
-# STANDARD        = 'STANAG'
-STANDARD        = 'ISO'
+STANDARD        = 'STANAG'
+# STANDARD        = 'ISO'
 # STANDARD        = '50m'
 # TODO : SEE ABOVE COMMENT
 
@@ -296,7 +296,7 @@ if __name__ == '__main__':
             )
      
         plt.figure(); plt.plot(f,n2019_result_db['m'],label='2019');plt.xscale('log');plt.title('dB / m slope for SLR \n North' +', ' + STANDARD + ', aggregated runs' )
-        plt.figure(); plt.plot(f,n2020_result_db['m'],label='2019');plt.xscale('log');plt.title('dB / m slope for SLR \n North' +', ' + STANDARD + ', aggregated runs' )
+        plt.figure(); plt.plot(f,n2020_result_db['m'],label='2020');plt.xscale('log');plt.title('dB / m slope for SLR \n North' +', ' + STANDARD + ', aggregated runs' )
         fig1,ax1 = plt.subplots(1,1,figsize=(10,8))    
         ax1, sl_nom ,rl_db_n2019 = \
             SLR_with_transforms.compare_SL_nominal_vs_RL_slope_implied(
@@ -304,21 +304,25 @@ if __name__ == '__main__':
                 p_label = '2019',
                 p_f_values      = f,
                 p_m_values      = n2019_result_db['m'],
-                p_track_dist_m  = track_dist)
+                p_track_dist_m  = track_dist,
+                p_color         = 'black',
+                p_linestyle     ='--')
         ax1, sl_nom ,rl_db_n2020 = \
             SLR_with_transforms.compare_SL_nominal_vs_RL_slope_implied(
                 p_ax = ax1,
                 p_label = '2020',
                 p_f_values      = f,
                 p_m_values      = n2020_result_db['m'],
-                p_track_dist_m  = track_dist)
-        fig1.suptitle('SL_calculated - SL_true, if SL is correct at CPA \n North hydrophone'); plt.xscale('log')
+                p_track_dist_m  = track_dist,
+                p_color         = 'red',
+                p_linestyle     = '-')
+        fig1.suptitle(r'$\varepsilon$, assuming CPA reference and '+STANDARD+' standard\n North hydrophone'); plt.xscale('log')
         ax1.set_xlabel('Frequency (Hz)')
         ax1.set_ylabel('Estimated error, $dB ref 1{\mu}Pa^2 / Hz @ 1m$')
         ax1.legend()
     
         plt.figure(); plt.plot(f,s2019_result_db['m'],label='2019');plt.xscale('log');plt.title('dB / m slope for SLR \n South' +', ' + STANDARD + ', aggregated runs' )
-        plt.figure(); plt.plot(f,s2020_result_db['m'],label='2019');plt.xscale('log');plt.title('dB / m slope for SLR \n South' +', ' + STANDARD + ', aggregated runs' )
+        plt.figure(); plt.plot(f,s2020_result_db['m'],label='2020');plt.xscale('log');plt.title('dB / m slope for SLR \n South' +', ' + STANDARD + ', aggregated runs' )
         fig2,ax2 = plt.subplots(1,1,figsize=(10,8))        
         ax2, sl_nom ,rl_db_s = \
             SLR_with_transforms.compare_SL_nominal_vs_RL_slope_implied(
@@ -326,15 +330,19 @@ if __name__ == '__main__':
                 p_label = '2019',
                 p_f_values      = f,
                 p_m_values      = s2019_result_db['m'],
-                p_track_dist_m  = track_dist)
+                p_track_dist_m  = track_dist,
+                p_color         = 'black',
+                p_linestyle     ='--')
         ax2, sl_nom ,rl_db_s = \
             SLR_with_transforms.compare_SL_nominal_vs_RL_slope_implied(
                 p_ax = ax2,
                 p_label = '2020',
                 p_f_values      = f,
                 p_m_values      = s2020_result_db['m'],
-                p_track_dist_m  = track_dist)
-        fig2.suptitle('SL_calculated - SL_true, if SL is correct at CPA \n South hydrophone'); plt.xscale('log')
+                p_track_dist_m  = track_dist,
+                p_color         = 'red',
+                p_linestyle     = '-')
+        fig2.suptitle(r'$\varepsilon$, assuming CPA reference and '+STANDARD+' standard\n South hydrophone'); plt.xscale('log')
         ax1.set_xlabel('Frequency (Hz)')
         ax1.set_ylabel('Estimated error, $dB ref 1{\mu}Pa^2 / Hz @ 1m$')
         ax2.legend()

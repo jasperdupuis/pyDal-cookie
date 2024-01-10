@@ -22,8 +22,7 @@ YEAR = 2020
 DIR_SPECTROGRAM = \
     r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\interim\spectrograms\\'
 
-if not (YEAR == 2020):
-    # 2019 data only :
+if not (YEAR == 2020):# 2019 data only :
     DIR_BINARY_HYDROPHONE = \
         r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\2019-Orca Ranging\Range Data Amalg\ES0451_MOOSE_OTH_DYN\RAW_TIME\\'
     # 2019 data only

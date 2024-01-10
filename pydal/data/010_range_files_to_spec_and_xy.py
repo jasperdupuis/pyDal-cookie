@@ -418,7 +418,7 @@ if __name__ == '__main__':
     MANUAL_RUNS = False
     SINGLE_RUN  = False
 
-    TYPE    = 'DR'
+    TYPE    = 'AM'
     MTH     = 'F' # J is 2019, F is 2020
     MACHINE = 'X'
     SPEED   = 'X'
