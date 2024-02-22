@@ -323,7 +323,7 @@ def compare_SL_nominal_vs_RL_slope_implied(
 
 
 def load_concat_arrays(
-    p_fname         =  'concatenated_data.pkl'
+    p_fname         =  'concatenated_data_2019.pkl'
     ):
     dir_spec , _    =  pydal.utils.get_fully_qual_spec_path()
     result          = pydal.utils.load_pickle_file(

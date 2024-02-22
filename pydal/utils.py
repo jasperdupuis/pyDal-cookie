@@ -389,3 +389,22 @@ def get_max_index(xx,yy,ss,nn):
         # Need to truncate xx and yy to fit ss and nn
         return nn[1]
     
+def concat_dictionaries(dict1,
+                        dict2,
+                        excl_list = [ 'Transform', 'Frequency']):
+    """
+    Assumes dict1 and dict2 have the exact same structure and key strings
+    
+    Strings in excl_list will not be concatenated
+    """
+    result = dict()
+
+    for key,value in dict1.items():
+        if key in excl_list: continue #ignore specified entries
+        result[key]     = np.concatenate((dict1[key],dict2[key]),axis=-1)
+
+    for key in excl_list: # add the skipped stuff, no concat operation
+        result[key] = dict1[key]
+    return result
+
+    

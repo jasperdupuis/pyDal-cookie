@@ -59,6 +59,18 @@ def y_transform_0_mean_max_norm_arcsin(p_z):
     return z_arcsin_arr
 
 
+def y_transform_0_mean_1d(p_z):
+    """
+    Transforms 1d data using vectorization from passed set to:
+        zero mean
+        normed on -1,1 using np.max
+        arcsin using np.arcsin
+    """
+    z_means             = np.mean ( p_z )
+    interim             = p_z - z_means
+    return interim
+
+
 def y_transform_0_mean(p_z):
     """
     Transforms array data using vectorization from passed set to:

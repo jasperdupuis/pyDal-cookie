@@ -11,7 +11,7 @@ import numpy as np
 import os
 
 """
-RUN SELETION VARIABLES
+RUN SELECTION VARIABLES
 """
 
 # An ambient run from July 2019
@@ -49,16 +49,48 @@ ML VARIABLES
 
 """
 
-SEED                        = 50 # key for repeatability!
-BATCH_SIZE                  = 250
-EPOCHS                      = 20
+# CONTROL RANDOMIZATION
+SEED        = 123456
+
+# SCALING FOR NORMALIZATION
+RL_SCALING          = 50 # some will be outside -1,1 with this number.
+X_SCALING           = 20
+Y_SCALING           = 100
+
+# PROCEDURAL STUFF, NEEDNT CHANGE OFTEN ( / EVER)
+MIN_F_INDEX_ML              = 28 
+MAX_F_INDEX_ML              = 998
 NUM_ML_WORKER_THREADS       = 1 # higher numbers should but dont work.
-LEARNING_RATE               = 0.1
-
-
 FRACTION_VALIDATION         = 0.1
 FRACTION_TEST               = 0.2
 FRACTION_TRAIN              = 0.7
+
+# DATA SPLIT
+TRAIN       = 0.9
+TEST        = 0.1
+HOLDBACK    = 0.0
+
+
+# ML MODEL PARAMETERS
+EPOCHS              = 5
+BATCH_SIZE          = 2**8
+N_HIDDEN_NODES      = 2**9
+N_HIDDEN_LAYERS     = 1 # not yet implemented
+LEARNING_RATE       = 0.01
+N_WORKERS           = 2
+LEN_SMOOTHING       = 1
+
+
+"""
+
+ERROR ANALYSIS VARIABLES
+
+"""
+
+Y_LENGTH    = 200
+N_Y_BINS    = 20
+
+
 
 
 """
@@ -81,11 +113,11 @@ DSP PROCSESING VARIABLES ONLY
 
 """
 
-# T_HYD = 1 #window length in seconds, 1Hz bw
-T_HYD = 0.1 #window length in seconds, 10Hz bw
+T_HYD = 1 #window length in seconds, 1Hz bw
+# T_HYD = 0.1 #window length in seconds, 10Hz bw
 T_HYD_WINDOW = T_HYD
-# OVERLAP = 0.9
-OVERLAP = 00
+OVERLAP = 0.9
+# OVERLAP = 00
 
 
 """
