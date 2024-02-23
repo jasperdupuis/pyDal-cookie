@@ -27,7 +27,6 @@ COMPARE_YEARS   = True
 STANDARD        = 'STANAG'
 # STANDARD        = 'ISO'
 # STANDARD        = '50m'
-# TODO : SEE ABOVE COMMENT
 
 MTH             = _vars.MTH
 # MTH             = 'J'
@@ -44,32 +43,6 @@ def get_and_concatenate_lists_of_grams_and_xy(
     this function instead treats all (passed) runs at once.
     
     """
-    # 1 get the spectrograms and x-y data, stitch them together so 
-    # f-axis align
-    
-    # spec_dict,N   = \
-    #     pydal.utils.get_spectrogram_file_as_dict(
-    #         p_run_list[0], p_dir_spec)
-    # x          = spec_dict [ 'X' ] 
-    # y          = spec_dict [ 'Y' ] 
-    # zero mean the decibel spectrograms
-    # # decibels
-    # s_concat     = \
-    #     pydal.data_transforms.y_transform_0_mean( 
-    #         10 * np.log10(spec_dict [ 'South_Spectrogram' ])) [:p_max_freq_index,:]
-    # n_concat     = \
-    #     pydal.data_transforms.y_transform_0_mean( 
-    #         10 * np.log10(spec_dict [ 'North_Spectrogram' ])) [:p_max_freq_index,:]
-   
-    # index = pydal.utils.get_max_index(len(x),len(y),s_concat.shape,n_concat.shape)
-
-    # x           = x [ : index ]
-    # y           = y [ : index ]
-    # s_concat    = s_concat[ : , : index ]
-    # n_concat    = n_concat[ : , : index ]
-    # run_lengths = [ index ]
-
-
     # loop to make the first entry in data in case [0]th entry is fucked up
     # see length criteria about 15 lines down with continue condition.
     count = 0 # track where to start the exhaustive loop.
