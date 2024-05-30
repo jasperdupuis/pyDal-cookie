@@ -170,8 +170,7 @@ def SLR_single_run_with_var_transforms(
     f           = spec_dict ['Frequency'] [ : p_max_freq_ind ]
     n_gram      = spec_dict['North_Spectrogram'][ : p_max_freq_ind , :]
     s_gram      = spec_dict['South_Spectrogram'][ : p_max_freq_ind , :]
-    
-    
+        
     
     if len(n_theta) > n_gram.shape[1] : 
         n_theta         = n_theta[:-1]

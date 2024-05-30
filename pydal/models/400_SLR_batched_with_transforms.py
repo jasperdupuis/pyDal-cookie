@@ -23,7 +23,9 @@ import SLR_with_transforms
 GENERATE_DATA   = False
 LOAD_DATA       = False
 SINGLE_YEAR     = False
-COMPARE_YEARS   = True
+COMPARE_YEARS   = False
+COMPARE_P_AND_M = False
+
 STANDARD        = 'STANAG'
 # STANDARD        = 'ISO'
 # STANDARD        = '50m'
@@ -131,6 +133,8 @@ def store_concat_arrays(
 
 
 
+
+
 if __name__ == '__main__':    
     if MTH == 'J':
         fname = 'concatenated_data_2019.pkl'
@@ -203,12 +207,25 @@ if __name__ == '__main__':
     
         if HYDRO =='North':
             plt.figure(); plt.plot(f,n_result_db['m']);plt.xscale('log');plt.title('dB / m slope for SLR \n North' +', ' + STANDARD + ', aggregated runs' )
-            sl_nom ,rl_db_n = \
+            # sl_nom ,rl_db_n = \
+            #     SLR_with_transforms.compare_SL_nominal_vs_RL_slope_implied(
+            #         p_f_values      = f,
+            #         p_m_values      = n_result_db['m'],
+            #         p_plot          = True,
+            #         p_track_dist_m  = track_dist)
+    
+            fig1,ax1 = plt.subplots(1,1,figsize=(10,8))    
+            ax1, sl_nom ,rl_db_n2019 = \
                 SLR_with_transforms.compare_SL_nominal_vs_RL_slope_implied(
+                    p_ax = ax1,
+                    p_label = '2019',
                     p_f_values      = f,
                     p_m_values      = n_result_db['m'],
-                    p_plot          = True,
-                    p_track_dist_m  = track_dist)
+                    p_track_dist_m  = track_dist,
+                    p_color         = 'black',
+                    p_linestyle     ='--')
+    
+    
     
         if HYDRO =='South':
             plt.figure(); plt.plot(f,s_result_db['m']);plt.xscale('log');plt.title('dB / m slope for SLR \n South' +', ' + STANDARD + ', aggregated runs' )
@@ -320,5 +337,185 @@ if __name__ == '__main__':
         ax1.set_ylabel('Estimated error, $dB ref 1{\mu}Pa^2 / Hz @ 1m$')
         ax2.legend()
     
+    
+    
+if COMPARE_P_AND_M:
+    
+    r2019_unmasked   = SLR_with_transforms.load_concat_arrays('concatenated_data_2019.pkl')
+    r2020_unmasked   = SLR_with_transforms.load_concat_arrays('concatenated_data_2020.pkl')
+    
+    fdir    = _dirs.DIR_RESULT_SLR
+
+    
+    for STD in _vars.STANDARDS:
+        fname_std = fdir + STD +'_'
+
         
+        r2019   = SLR_with_transforms.mask_data(r2019_unmasked,STANDARD)
+        r2020   = SLR_with_transforms.mask_data(r2020_unmasked,STANDARD)
+        f       = r2019['Frequency']  
         
+        #
+        #
+        # The y-SLR data
+        
+        ny2019_result_db     = SLR_with_transforms.SLR_with_y_transform(
+            p_x             = r2019['X'],
+            p_y             = r2019['Y'],
+            p_theta         = np.zeros_like(r2019['X']), #not used placeholder
+            p_gram          = r2019['North'],
+            p_x_transform   = pydal.data_transforms.x_transform_y_only,
+            # p_x_transform   = pydal.data_transforms.x_transform_x_only,
+            p_y_transform   = pydal.data_transforms.no_2d_transform
+            )
+        
+        sy2019_result_db     = SLR_with_transforms.SLR_with_y_transform(
+            p_x             = r2019['X'],
+            p_y             = r2019['Y'],
+            p_theta         = np.zeros_like(r2019['X']), #not used placeholder
+            p_gram          = r2019['South'],
+            p_x_transform   = pydal.data_transforms.x_transform_y_only,
+            # p_x_transform   = pydal.data_transforms.x_transform_x_only,
+            p_y_transform   = pydal.data_transforms.no_2d_transform
+            )
+        
+        ny2020_result_db     = SLR_with_transforms.SLR_with_y_transform(
+            p_x             = r2020['X'],
+            p_y             = r2020['Y'],
+            p_theta         = np.zeros_like(r2020['X']), #not used placeholder
+            p_gram          = r2020['North'],
+            p_x_transform   = pydal.data_transforms.x_transform_y_only,
+            # p_x_transform   = pydal.data_transforms.x_transform_x_only,
+            p_y_transform   = pydal.data_transforms.no_2d_transform
+            )
+        
+        sy2020_result_db     = SLR_with_transforms.SLR_with_y_transform(
+            p_x             = r2020['X'],
+            p_y             = r2020['Y'],
+            p_theta         = np.zeros_like(r2020['X']), #not used placeholder
+            p_gram          = r2020['South'],
+            p_x_transform   = pydal.data_transforms.x_transform_y_only,
+            # p_x_transform   = pydal.data_transforms.x_transform_x_only,
+            p_y_transform   = pydal.data_transforms.no_2d_transform
+            )
+        
+        #
+        #
+        # The x-SLR data
+        
+        nx2019_result_db     = SLR_with_transforms.SLR_with_y_transform(
+            p_x             = r2019['X'],
+            p_y             = r2019['Y'],
+            p_theta         = np.zeros_like(r2019['X']), #not used placeholder
+            p_gram          = r2019['North'],
+            p_x_transform   = pydal.data_transforms.x_transform_x_only,
+            p_y_transform   = pydal.data_transforms.no_2d_transform
+            )
+        
+        sx2019_result_db     = SLR_with_transforms.SLR_with_y_transform(
+            p_x             = r2019['X'],
+            p_y             = r2019['Y'],
+            p_theta         = np.zeros_like(r2019['X']), #not used placeholder
+            p_gram          = r2019['South'],
+            p_x_transform   = pydal.data_transforms.x_transform_x_only,
+            p_y_transform   = pydal.data_transforms.no_2d_transform
+            )
+        
+        nx2020_result_db     = SLR_with_transforms.SLR_with_y_transform(
+            p_x             = r2020['X'],
+            p_y             = r2020['Y'],
+            p_theta         = np.zeros_like(r2020['X']), #not used placeholder
+            p_gram          = r2020['North'],
+            p_x_transform   = pydal.data_transforms.x_transform_x_only,
+            p_y_transform   = pydal.data_transforms.no_2d_transform
+            )
+        
+        sx2020_result_db     = SLR_with_transforms.SLR_with_y_transform(
+            p_x             = r2020['X'],
+            p_y             = r2020['Y'],
+            p_theta         = np.zeros_like(r2020['X']), #not used placeholder
+            p_gram          = r2020['South'],
+            p_x_transform   = pydal.data_transforms.x_transform_x_only,
+            p_y_transform   = pydal.data_transforms.no_2d_transform
+            )
+    
+        # South, y axis
+        fname = fname_std + 'south_y'
+        fig, axs = plt.subplots(2,figsize=(10,8)) # axs[0] is top one
+        fig.suptitle('P-value and slope for SLR(y)\n' + STD + ', ' + 'South hydrophone')
+        axs[0].plot(f,sy2019_result_db['p'],label='2019 p-value');
+        axs[0].plot(f,sy2020_result_db['p'],label='2020 p-value');
+        axs[0].set_ylim(0,0.2)
+        axs[0].set_xscale('log');
+        axs[1].plot(f,sy2019_result_db['m'],label='2019 slope');
+        axs[1].plot(f,sy2020_result_db['m'],label='2020 slope');
+        axs[1].set_xscale('log');
+        axs[0].set_ylabel('p-value')
+        axs[0].axhline(0.05,linewidth=1,color='r') # zero mean line
+        axs[1].set_ylabel('Slope, dB / m')
+        fig.supxlabel('Frequency (Hz)')
+        axs[0].legend(loc='upper left')
+        axs[1].legend(loc='upper left')
+        plt.savefig(fname+'.pdf', dpi=300)
+        plt.savefig(fname+'.png', dpi=300)
+    
+        # South, x axis
+        fname = fname_std + 'south_x'
+        fig, axs = plt.subplots(2,figsize=(10,8)) # axs[0] is top one
+        fig.suptitle('P-value and slope for SLR(x)\n' + STD + ', ' + 'South hydrophone')
+        axs[0].plot(f,sx2019_result_db['p'],label='2019 p-value');
+        axs[0].plot(f,sx2020_result_db['p'],label='2020 p-value');
+        axs[0].set_ylim(0,0.2)
+        axs[0].set_xscale('log');
+        axs[1].plot(f,sx2019_result_db['m'],label='2019 slope');
+        axs[1].plot(f,sx2020_result_db['m'],label='2020 slope');
+        axs[1].set_xscale('log');
+        axs[0].set_ylabel('p-value')
+        axs[0].axhline(0.05,linewidth=1,color='r') # zero mean line
+        axs[1].set_ylabel('Slope, dB / m')
+        fig.supxlabel('Frequency (Hz)')
+        axs[0].legend(loc='upper left')
+        axs[1].legend(loc='upper left')
+        plt.savefig(fname+'.pdf', dpi=300)
+        plt.savefig(fname+'.png', dpi=300)
+    
+        # North, y axis
+        fname = fname_std + 'north_y'
+        fig, axs = plt.subplots(2,figsize=(10,8)) # axs[0] is top one
+        fig.suptitle('P-value and slope for SLR(y)\n' + STD + ', ' + 'North hydrophone')
+        axs[0].plot(f,ny2019_result_db['p'],label='2019 p-value');
+        axs[0].plot(f,ny2020_result_db['p'],label='2020 p-value');
+        axs[0].set_ylim(0,0.2)
+        axs[0].set_xscale('log');
+        axs[1].plot(f,ny2019_result_db['m'],label='2019 slope');
+        axs[1].plot(f,ny2020_result_db['m'],label='2020 slope');
+        axs[1].set_xscale('log');
+        axs[0].set_ylabel('p-value')
+        axs[0].axhline(0.05,linewidth=1,color='r') # zero mean line
+        axs[1].set_ylabel('Slope, dB / m')
+        fig.supxlabel('Frequency (Hz)')
+        axs[0].legend(loc='upper left')
+        axs[1].legend(loc='upper left')
+        plt.savefig(fname+'.pdf', dpi=300)
+        plt.savefig(fname+'.png', dpi=300)
+
+        # North, x axis
+        fname = fname_std + 'north_x'
+        fig, axs = plt.subplots(2,figsize=(10,8)) # axs[0] is top one
+        fig.suptitle('P-value and slope for SLR(x)\n' + STD + ', ' + 'North hydrophone')
+        axs[0].plot(f,nx2019_result_db['p'],label='2019 p-value');
+        axs[0].plot(f,nx2020_result_db['p'],label='2020 p-value');
+        axs[0].set_ylim(0,0.2)
+        axs[0].set_xscale('log');
+        axs[1].plot(f,nx2019_result_db['m'],label='2019 slope');
+        axs[1].plot(f,nx2020_result_db['m'],label='2020 slope');
+        axs[1].set_xscale('log');
+        axs[0].set_ylabel('p-value')
+        axs[0].axhline(0.05,linewidth=1,color='r') # zero mean line
+        axs[1].set_ylabel('Slope, dB / m')
+        fig.supxlabel('Frequency (Hz)')
+        axs[0].legend(loc='upper left')
+        axs[1].legend(loc='upper left')
+        plt.savefig(fname+'.pdf', dpi=300)
+        plt.savefig(fname+'.png', dpi=300)
+

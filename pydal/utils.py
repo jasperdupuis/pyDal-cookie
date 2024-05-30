@@ -10,6 +10,7 @@ import h5py as h5
 import numpy as np
 import pickle
 
+import pydal.models.SLR_with_transforms as SLR_with_transforms
 import pydal.utils
 import pydal._directories_and_files as _dirs
 import pydal._variables as _vars
@@ -237,7 +238,7 @@ def find_target_freq_index(
     """
     target_index = \
         np.where(p_f_basis - p_f_targ + 1 > 0)[0][0] 
-    target_index = target_index - 1 #to ensure actually catching entire desired bin.
+    target_index = target_index 
     return target_index
 
 
@@ -407,4 +408,55 @@ def concat_dictionaries(dict1,
         result[key] = dict1[key]
     return result
 
+def check_make_dir(p_target):
+    if os.path.isdir(p_target): return #it already exists
+    else:
+        os.mkdir(p_target)
+        
+
+def load_training_data(p_bool_true_for_dict=False):
+    """
+    This data has been 
+    """
+    fname2019   = r'concatenated_data_2019.pkl'
+    fname2020   = r'concatenated_data_2020.pkl'
+    data2019    = SLR_with_transforms.load_concat_arrays(fname2019)
+    data2020    = SLR_with_transforms.load_concat_arrays(fname2020)
+    data        = pydal.utils.concat_dictionaries(data2019,data2020)
+    del data2019
+    del data2020 # Neither needed anymore.
     
+    f           = data['Frequency']
+    rl_s        = data['South'] # 2d array, zero mean gram
+    rl_n        = data['North'] # 2d array, zero mean gram
+    rl_s        = rl_s / _vars.RL_SCALING #normalize to roughly -1/1    
+    rl_n        = rl_n / _vars.RL_SCALING #normalize to roughly -1/1    
+    x           = data['X'] / _vars.X_SCALING
+    y           = data['Y'] / _vars.Y_SCALING
+    
+    if p_bool_true_for_dict:
+        data['South'] = rl_s        
+        data['North'] = rl_n
+        data['X'] = x
+        data['Y'] = y
+        return data
+    else:
+        return f,rl_s,rl_n,x,y
+
+
+def L1_error(y,y_hat):
+    """
+    same length required.
+    """
+    delta = y_hat-y
+    L1 = np.sum(delta) / len(y)
+    return L1
+
+
+def L2_error(y,y_hat):
+    """
+    
+    """
+    delta = (y_hat-y)**2
+    L2 = np.sum(delta) / len(y)
+    return L2

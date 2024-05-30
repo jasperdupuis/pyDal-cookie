@@ -25,6 +25,7 @@ import multiprocessing as mp
 
 # For access to the real 0-mean spectral-xy dataset.
 import pydal.models.SLR_with_transforms
+import pydal._variables as _vars
 
 # print("USING pytorch VERSION: ", torch.__version__)
 
@@ -178,7 +179,6 @@ def train( loader_train, loader_val, batch_size = 100, epochs=5):
         for i,data in enumerate(loader_train):
             features,labels = data
             y,f             = features[:,0],features[:,1]
-            y,labels        = convolve1d_unstructured_x_y_data(y,labels,LEN_SMOOTHING)
             f               = torch.ones_like(y) * f[0]
             features        = torch.column_stack((y,f))
 
@@ -227,6 +227,21 @@ if __name__ == "__main__":
     # Repeatability:
     fixed_seed  = torch.manual_seed(SEED)
 
+    fname2019   = r'concatenated_data_2019.pkl'
+    fname2020   = r'concatenated_data_2020.pkl'
+    data2019    = pydal.models.SLR_with_transforms.load_concat_arrays(fname2019)
+    data2020    = pydal.models.SLR_with_transforms.load_concat_arrays(fname2020)
+    data        = pydal.utils.concat_dictionaries(data2019,data2020)
+
+    f           = data['Frequency']
+    rl_s        = data['South'] # 2d array, zero mean gram
+    rl_n        = data['North'] # 2d array, zero mean gram
+    rl_s        = rl_s / _vars.RL_SCALING #normalize to roughly -1/1    
+    rl_n        = rl_n / _vars.RL_SCALING #normalize to roughly -1/1    
+    x           = data['X'] / _vars.X_SCALING
+    y           = data['Y'] / _vars.Y_SCALING
+
+
     # freq_targ   = 105
     freq_targ       = 55
     # freq_targ       = 80
@@ -236,41 +251,20 @@ if __name__ == "__main__":
     fname2020   = r'concatenated_data_2020.pkl'
     # data2019    = pydal.models.SLR_with_transforms.load_concat_arrays(fname2019)
     data2020    = pydal.models.SLR_with_transforms.load_concat_arrays(fname2019)
-
-    data        = data2020 # for now, concat these later
-    f           = data['Frequency']
-    f_index     = pydal.utils.find_target_freq_index(freq_targ, f)
-    # Normalize the frequency span to 0,1
-    f_max       = np.max(f)
-    f           = f / f_max
-    # load the RL data.
-    rl_s        = data['South'] # 2d array, zero mean gram
-    rl_n        = data['North'] # 2d array, zero mean gram
-    # normalize the RL data to -1,1
-    s_max       = np.max(rl_s)
-    n_max       = np.max(rl_s)
-    rl_s        = rl_s / s_max 
-    rl_n        = rl_n / n_max
-    x           = data['X'] 
-    y           = data['Y']
-    # normalize the position data to -1,1
-    x_max       = np.max(x)
-    y_max       = np.max(y)
-    x           = x / x_max
-    y           = y / y_max
         
     # Assign features and labels here. 
-    received_level  = rl_s[f_index,:] # 1D numpy array
     labels          = received_level # 1D numpy array
     
+    
     # train data
-    dset_full               = f_yf_orca_dataset((y, freq_targ), labels)
-    test_size               = int ( len(y) * TEST)
-    train_size              = len(dset_full) - test_size
-    dset_train,dset_test    = \
+    dset_full               = classes.f_y_orca_dataset(y, labels)
+    test_size               = int ( len(y) * _vars.TEST)
+    hold_size               = int ( len(y) * _vars.HOLDBACK)
+    train_size              = len(dset_full) - test_size - hold_size
+    dset_train,dset_test,dset_hold    = \
         torch.utils.data.random_split(
             dataset     = dset_full,
-            lengths     = [train_size,test_size],
+            lengths     = [train_size,test_size,hold_size],
             generator   = fixed_seed  )
     
     

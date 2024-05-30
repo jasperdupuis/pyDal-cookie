@@ -6,6 +6,8 @@ build up using real data from trial results
 This file is only for 1d model training, 
 i.e., use only the y coordinate as feature and 0-mean RLs as labels
 
+models are fixed for a given frequency.
+
 """
 
 import os
@@ -16,11 +18,9 @@ import torch.nn as nn
 from torch import optim
 from torch.utils.data import DataLoader
 
-import multiprocessing as mp
-
-
 # various utils and imports of my own creation
-import classes # local to this directory
+import classes      # local to this directory
+import functions    # local to this directory
 import pydal.utils
 import pydal._directories_and_files as _dirs
 import pydal._variables as _vars
@@ -28,51 +28,45 @@ import pydal._variables as _vars
 # For access to the real 0-mean spectral-xy dataset.
 import pydal.models.SLR_with_transforms
 
+# Root dir for saving / loading models
+ROOT_DIR            = _dirs.DIR_SINGLE_F_1D_NN
 
 # Control flags
 TRAIN_MODELS        = False
 HYDRO               = 'North'
-VISUALIZE_MODELS    = False
-FMIN                = 500
-FMAX                = 1000
+VISUALIZE_MODELS    = True
+FMIN                = 49
+FMAX                = 1000   
+
+fname2019   = r'concatenated_data_2019.pkl'
+fname2020   = r'concatenated_data_2020.pkl'
+data2019    = pydal.models.SLR_with_transforms.load_concat_arrays(fname2019)
+data2020    = pydal.models.SLR_with_transforms.load_concat_arrays(fname2020)
+data        = pydal.utils.concat_dictionaries(data2019,data2020)
+
+f           = data['Frequency']
+rl_s        = data['South'] # 2d array, zero mean gram
+rl_n        = data['North'] # 2d array, zero mean gram
+rl_s        = rl_s / _vars.RL_SCALING #normalize to roughly -1/1    
+rl_n        = rl_n / _vars.RL_SCALING #normalize to roughly -1/1    
+x           = data['X'] / _vars.X_SCALING
+y           = data['Y'] / _vars.Y_SCALING
 
 
-class f_y_orca_dataset(torch.utils.data.Dataset):
-    def __init__(self, x,outputs):
-        """
-        inputs and outputs are the features and labels as 1D tensors
-        """
-        self.assign_basis_values (x,outputs)
-        
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"Model inputs and labels are being moved to {self.device} device.\n\n")
-
-
-    def __len__(self):
-        return len(self.inputs)
-
-    def __getitem__(self, idx):
-        """
-        x and y are here inputs and labels, not cartesian
-        """
-        x = self.inputs[idx]
-        y = self.labels[idx]
-        x = x.float()
-        y = y.float()
-        x = x.to(self.device)
-        y = y.to(self.device)
-        return x, y
-
-    def assign_basis_values(self,x,outputs):
-        """
-        kwargs are feature identifiers in key-value pairs
-        """
-        # x = torch.tensor(x) # 
-        # self.inputs = torch.column_stack((x))
-        x           = torch.tensor(x)
-        self.inputs = x.unsqueeze(1)
-        self.labels = torch.tensor(outputs)
-
+"""
+#
+#
+#
+#
+#
+"""
+testing = False # WHAT IT SOUNDS LIKE
+"""
+#
+#
+#
+#
+"""
 
 def convolve1d_unstructured_x_y_data(x,y,kernel_size=_vars.LEN_SMOOTHING):
     """
@@ -161,100 +155,99 @@ if __name__ == "__main__":
     # Repeatability:
     fixed_seed  = torch.manual_seed(_vars.SEED)
     
-    fname2019   = r'concatenated_data_2019.pkl'
-    fname2020   = r'concatenated_data_2020.pkl'
-    data2019    = pydal.models.SLR_with_transforms.load_concat_arrays(fname2019)
-    data2020    = pydal.models.SLR_with_transforms.load_concat_arrays(fname2020)
-    data        = pydal.utils.concat_dictionaries(data2019,data2020)
-
-    f           = data['Frequency']
-    rl_s        = data['South'] # 2d array, zero mean gram
-    rl_n        = data['North'] # 2d array, zero mean gram
-    rl_s        = rl_s / _vars.RL_SCALING #normalize to roughly -1/1    
-    rl_n        = rl_n / _vars.RL_SCALING #normalize to roughly -1/1    
-    x           = data['X'] / _vars.X_SCALING
-    y           = data['Y'] / _vars.Y_SCALING
-
-    if HYDRO == 'North' :
-        rl = rl_n
-    if HYDRO == 'South' :
-        rl = rl_s
-    
-    # Set up the target directory, create if it doesn't exist.
-    # The root directory that differentiates based on _variables.py
-    path = _dirs.DIR_SINGLE_F_NN
-    if not ( os.path.isdir(path)) : # need to make dir if doesnt exist
-        os.mkdir(path)
-    
-    dir_spec_subdir = pydal.utils.create_dirname_spec_xy(
-        _vars.FS_HYD,
-        _vars.T_HYD_WINDOW * _vars.FS_HYD,
-        _vars.OVERLAP
-        )
-    dir_target  = path + dir_spec_subdir # no ending \\ for os.mkdir
-    
-    dir_target  = path + dir_spec_subdir + r'\\' + HYDRO 
-    if not ( os.path.isdir(dir_target)) : # need to make dir if doesnt exist
-        os.mkdir(dir_target)
-    dir_target = dir_target + r'\\'
-
     if TRAIN_MODELS:
-        
-        for freq_targ in f:
-            if freq_targ < FMIN : continue
-            if freq_targ > FMAX : break
-            f_index     = pydal.utils.find_target_freq_index(freq_targ, f)
-    
-            # Assign features and labels here. 
-            received_level  = rl[f_index,:] # 1D numpy array
-            labels          = received_level # 1D numpy array
-            
-            # train data
-            dset_full               = f_y_orca_dataset(y, labels)
-            test_size               = int ( len(y) * _vars.TEST)
-            train_size              = len(dset_full) - test_size
-            dset_train,dset_test    = \
-                torch.utils.data.random_split(
-                    dataset     = dset_full,
-                    lengths     = [train_size,test_size],
-                    generator   = fixed_seed  )
-            # Sampler sets the distribution for selection for a batch of data
-            weights = np.ones(len(dset_train)) / len(dset_train)
-            sampler = torch.utils.data.WeightedRandomSampler(
-                weights, 
-                len(dset_train), 
-                replacement=True)
-            dataloader_train = DataLoader(
-                    dset_train, 
-                    batch_size=_vars.BATCH_SIZE,
-                    # sampler = sampler,
-                    num_workers = _vars.NUM_ML_WORKER_THREADS) 
-            dataloader_test = DataLoader(
-                    dset_test, 
-                    batch_size=_vars.BATCH_SIZE,
-                    # sampler = sampler,
-                    num_workers = _vars.NUM_ML_WORKER_THREADS) 
-            
-            
-            # Instantiate the network (hardcoded in class)
-            model = classes.DeepNetwork()
-            optimizer = optim.Adam(model.parameters(), lr=_vars.LEARNING_RATE)
-            loss_fn = nn.MSELoss()  # mean squared error    
-            
-            
-            losses_t, losses_v = train(
-                dataloader_train,
-                dataloader_test,
-                _vars.BATCH_SIZE,
-                _vars.EPOCHS
-                )
-            
-            fname = dir_target +  str(int(freq_targ)).zfill(4) + '.trch'
-            torch.save(model.state_dict(), fname)
-            del model
 
-    # # Losses.     
-    # # plot end of epoch loss profiles:
+        for HYDRO in _vars.HYDROS:
+            if HYDRO.capitalize() == 'North' :
+                rl = rl_n
+            if HYDRO.capitalize() == 'South' :
+                rl = rl_s
+                
+            for n_layer in _vars.LIST_N_LAYERS_1D:
+                for n_node in _vars.LIST_N_NODES_1D:
+                    dir_target              = functions.set_directory_struct(ROOT_DIR,HYDRO)
+                    dir_target            = dir_target + str(n_layer) + r' layers/'
+                    pydal.utils.check_make_dir(dir_target)
+                    dir_target            = dir_target + str(n_node) + r' nodes/'
+                    pydal.utils.check_make_dir(dir_target)
+
+                    dir_target_losses       = dir_target + r'losses/'
+                    pydal.utils.check_make_dir(dir_target)
+                    pydal.utils.check_make_dir(dir_target_losses)        
+                        
+                    for freq_targ in f:
+                        if freq_targ > FMAX : break
+                        fname = dir_target +  str(int(freq_targ)).zfill(4) + '.trch'
+                        
+                        if os.path.isfile(fname) : # check if file exists:
+                            continue # stop the loop if so
+                
+                        f_index     = pydal.utils.find_target_freq_index(freq_targ, f)                
+                        # Assign features and labels here. 
+                        received_level  = rl[f_index,:] # 1D numpy array
+                        labels          = received_level # 1D numpy array
+                        
+                        # train data
+                        dset_full               = classes.f_y_orca_dataset(y, labels)
+                        test_size               = int ( len(y) * _vars.TEST)
+                        hold_size               = int ( len(y) * _vars.HOLDBACK)
+                        train_size              = len(dset_full) - test_size - hold_size
+                        dset_train,dset_test,dset_hold    = \
+                            torch.utils.data.random_split(
+                                dataset     = dset_full,
+                                lengths     = [train_size,test_size,hold_size],
+                                generator   = fixed_seed  )
+                        # Sampler sets the distribution for selection for a batch of data
+                        weights = np.ones(len(dset_train)) / len(dset_train)
+                        sampler = torch.utils.data.WeightedRandomSampler(
+                            weights, 
+                            len(dset_train), 
+                            replacement=True)
+                        dataloader_train = DataLoader(
+                                dset_train, 
+                                batch_size=_vars.BATCH_SIZE,
+                                # sampler = sampler,
+                                num_workers = _vars.NUM_ML_WORKER_THREADS) 
+                        dataloader_test = DataLoader(
+                                dset_test, 
+                                batch_size=_vars.BATCH_SIZE,
+                                # sampler = sampler,
+                                num_workers = _vars.NUM_ML_WORKER_THREADS) 
+                        
+                        
+                        # Instantiate the network (hardcoded in class)
+                        model = classes.DeepNetwork_1d(n_layer,n_node)
+                        optimizer = optim.Adam(model.parameters(), lr=_vars.LEARNING_RATE)
+                        loss_fn = nn.MSELoss()  # mean squared error    
+                        
+                        
+                        losses_t, losses_v = train(
+                            dataloader_train,
+                            dataloader_test,
+                            _vars.BATCH_SIZE,
+                            _vars.EPOCHS
+                            )
+                        
+                        
+                        if testing: 
+                            break # DEBUG ONLY.
+                            """
+                            
+                            SEE THIS ! ! !
+                            
+                            """
+        
+                        d_losses = {'Train' : losses_t, 'Test' : losses_v}
+                        pydal.utils.dump_pickle_file(
+                            d_losses, 
+                            dir_target_losses, 
+                            p_fname = str(int(freq_targ)).zfill(4) + '.loss')
+                        
+                        torch.save(model.state_dict(), fname)
+                        del model
+
+    # Losses.     
+    # plot end of epoch loss profiles:
     # losses_train_unravel    = np.zeros(len(losses_t)) # epoch length
     # index = 0
     # for l in losses_t:
@@ -271,9 +264,30 @@ if __name__ == "__main__":
     # plt.suptitle('End of epoch losses')
     # plt.legend()
     # plt.show()
-            
+        
+    
+    # plt.plot((torch.tensor(losses_v[0])).detach().numpy())
+    # plt.plot((torch.tensor(losses_t[0])).detach().numpy())    
      
-    if VISUALIZE_MODELS:       
+    if VISUALIZE_MODELS:   
+        """
+        #testing value:
+        fname_get = r'C:/Users/Jasper/Documents/Repo/pyDal/pyDal-cookie/pydal/models/saved_models_1d_single_f/hdf5_spectrogram_bw_1.0_overlap_90/NORTH/1 layers/14 nodes/0053.trch' 
+        """
+        n_layer = 1
+        n_node = 14
+        dir_target              = ROOT_DIR
+        dir_target              = functions.set_directory_struct(ROOT_DIR,HYDRO)
+        dir_target              = dir_target + str(n_layer) + r' layers/'
+        dir_target              = dir_target + str(n_node) + r' nodes/'
+        os.mkdir(dir_target+'figs/')
+
+        # must assign RL based on north or south hydrophone
+        if HYDRO.capitalize() == 'North' :
+            rl = rl_n
+        if HYDRO.capitalize() == 'South' :
+            rl = rl_s
+        
         # Visualize model result against real data
         #Set up the cartesian geometry
         xmin = -1
@@ -293,22 +307,23 @@ if __name__ == "__main__":
         list_files = [x for x in list_files if not x == 'figs']
         for fname in list_files:
             # Get the zero-mean data set
-            freq_targ   = int(fname.split('.')[0])
-            f_index     = pydal.utils.find_target_freq_index(freq_targ, f)
+            freq_targ       = int(fname.split('.')[0])
+            f_index         = pydal.utils.find_target_freq_index(freq_targ, f)
             received_level  = rl[f_index,:] * _vars.RL_SCALING # 1D numpy array
             # GEt the model and create a data set
-            fname_get = dir_target + fname
-            model = classes.DeepNetwork()
+            fname_get       = dir_target + fname
+            model           = classes.DeepNetwork_1d(n_layer,n_node)
             model.load_state_dict(torch.load(fname_get))
             model.eval()
-            result      = []
-            test        = torch.tensor(y_range)
+            result          = []
+            test            = torch.tensor(y_range)
             with torch.no_grad():
                 for t in test:
                     t = t.float()
                     t = t.reshape((1,1))
                     result.append(model.neural_net(t))                
-            result      = np.array(result) * _vars.RL_SCALING
+            
+            result          = np.array(result) * _vars.RL_SCALING
 
             # Plot the model results over the zero mean data
             fig, ax = plt.subplots(nrows = 1, ncols=1, figsize=(10,8))
@@ -319,11 +334,6 @@ if __name__ == "__main__":
             fig.supxlabel('Y-position in range X-Y system (m)', fontsize=12)
             fig.supylabel('Reconstructed spectral response, dB ref 1 ${\mu}Pa^2 / Hz$', fontsize=12)
             plt.tight_layout()
-            plt.savefig(dir_target + r'figs\\' + fname.split('.')[0] + '.png')
+            plt.savefig(dir_target + r'figs\\' + fname.split('.')[0] + '.jpeg')
             plt.close('all')
     
-    
-    # # # device = "cuda" if torch.cuda.is_available() else "cpu"
-    # # # print(f"\n\nTest tensors are being moved to and from {device} device.\n\n")    
-        
-   

@@ -59,6 +59,7 @@ else:# 2020 data :
     with open(fname_range_dict,'r') as f:
         RANGE_DICTIONARY = eval(f.read())
 
+
 """
 
 INTERIM DATA DIRECTORIES (post some processing)
@@ -86,14 +87,25 @@ DIR_SL_RESULTS_LOGR = \
 DIR_SL_RESULTS_RAM = \
     r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\processed\SL results RAM\\'
 
+
+"""
+
+"""
+DIR_RESULT_SLR =\
+    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\pydal\results\SLR\\'
+
 """
 
 MODEL DIRECTORIES
 
 """
 
-DIR_SINGLE_F_NN = \
-    r'C:/Users/Jasper/Documents/Repo/pyDal/pyDal-cookie/pydal/models/saved_models_single_f\\'
+DIR_SINGLE_F_SLR = \
+    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\pydal\models\saved_models_1d_SLR\\'
+DIR_SINGLE_F_1D_NN = \
+    r'C:/Users/Jasper/Documents/Repo/pyDal/pyDal-cookie/pydal/models/saved_models_1d_single_f/'
+DIR_SINGLE_F_2D_NN = \
+    r'C:/Users/Jasper/Documents/Repo/pyDal/pyDal-cookie/pydal/models/saved_models_2d_single_f/'
 
 
 """ 

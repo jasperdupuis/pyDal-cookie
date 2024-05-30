@@ -16,6 +16,7 @@ import pydal.data_transforms
 import pydal._directories_and_files as _dirs
 import pydal._variables as _vars
 
+import interpolations
 import SLR_with_transforms
 
 
@@ -26,8 +27,10 @@ data2020    = SLR_with_transforms.load_concat_arrays(fname2020)
 data        = pydal.utils.concat_dictionaries(data2019,data2020)
 data['North'] = data['North'][_vars.MIN_F_INDEX_ML:_vars.MAX_F_INDEX_ML,:]
 data['South'] = data['South'][_vars.MIN_F_INDEX_ML:_vars.MAX_F_INDEX_ML,:]
-
 frequency   = data['Frequency'][_vars.MIN_F_INDEX_ML:_vars.MAX_F_INDEX_ML]
+del data2019 # Not needed anymore, free memory
+del data2020 # Not needed anymore, free memory
+
 
 # Set up the test domain.
 # These are normalized values!
@@ -44,7 +47,7 @@ y_range     = np.arange(ymin,ymax,step=0.01)
 #
 # Calculate the SLR results (this is fast, can be redone from data):
 # Stores to dictionaries with keys m,b,r,p,err across frequency range
-n_result_db     = SLR_with_transforms.SLR_with_y_transform(
+slopes_db_n     = SLR_with_transforms.SLR_with_y_transform(
     p_x             = data['X'] / _vars.X_SCALING,
     p_y             = data['Y'] / _vars.Y_SCALING,
     p_theta         = np.zeros_like(data['X']), #not used placeholder
@@ -54,7 +57,7 @@ n_result_db     = SLR_with_transforms.SLR_with_y_transform(
     p_y_transform   = pydal.data_transforms.no_2d_transform
     )
 
-s_result_db     = SLR_with_transforms.SLR_with_y_transform(
+slopes_db_s     = SLR_with_transforms.SLR_with_y_transform(
     p_x             = data['X'] / _vars.X_SCALING,
     p_y             = data['Y'] / _vars.Y_SCALING,
     p_theta         = np.zeros_like(data['X']), #not used placeholder
@@ -64,42 +67,59 @@ s_result_db     = SLR_with_transforms.SLR_with_y_transform(
     p_y_transform   = pydal.data_transforms.no_2d_transform
     )
 
+result_SLR_s   = interpolations.interpolate_1d_y_SLR(
+    slopes_db_s['m'], frequency, y_range)
+result_SLR_n   = interpolations.interpolate_1d_y_SLR(
+    slopes_db_n['m'], frequency, y_range)
+
 
 # # 2
 #
 # ML results
 # Y-coordinate feature only
 
-p_track_dist_m  = 200
-p_track_step    = 2
-p_m_values      = n_result_db['m']
+dir_spec_subdir = pydal.utils.create_dirname_spec_xy(
+    _vars.FS_HYD,
+    _vars.T_HYD_WINDOW * _vars.FS_HYD,
+    _vars.OVERLAP
+    )
+dir_target_s    = _dirs.DIR_SINGLE_F_NN \
+                + dir_spec_subdir \
+                + r'\\South\\'
+dir_target_n    = _dirs.DIR_SINGLE_F_NN \
+                + dir_spec_subdir \
+                + r'\\North\\'
 
-track_steps     = np.arange(p_track_dist_m / p_track_step) 
-track_steps     -= (len(track_steps) // 2 )
-track_steps     *= p_track_step
-track_steps     = np.reshape(track_steps,( len ( track_steps) , 1 ) )
-slope_per_100m  = np.reshape(p_m_values, ( 1 , len ( p_m_values)))
-
-tl_var          = np.multiply(track_steps,slope_per_100m)
-
-# now, create what the RL would be while accounting for the 
-# linear TL variation model.
-rl              = p_sl_nom + tl_var
-rl_lin          = _vars.REF_UPA * (10 ** ( ( rl / 10 )))
-rl_lin_mean     = np.mean(rl_lin,axis=0)
-rl_db_mean      = 10*np.log10(rl_lin_mean / _vars.REF_UPA)
+result_ML_y_1d_n = interpolations.interpolate_1d_y_ML(
+    frequency, y_range, dir_target_n)
+result_ML_y_1d_s = interpolations.interpolate_1d_y_ML(
+    frequency, y_range, dir_target_s)
 
 
-test            = torch.tensor(y_range)
-with torch.no_grad():
-    for t in test:
-        t = t.float()
-        t = t.reshape((1,1))
-        result.append(model.neural_net(t))                
-result = np.array(result) * _vars.RL_SCALING
+# Compare two models 
+p_model_1 = result_ML_y_1d_s                #2d RL variation as f(position, frequency)
+# p_model_2 = np.zeros_like(result_ML_y_1d_n) #2d RL variation as f(position, frequency)
+p_model_2 = result_SLR_s
+p_fs = frequency
+p_sl_nom = 100
+
+rl_1            = p_sl_nom + p_model_1
+rl_1_lin        = _vars.REF_UPA * (10 ** ( ( rl_1 / 10 )))
+rl_1_lin_mean     = np.mean(rl_1_lin,axis=0)
+rl_1_db_mean      = 10*np.log10(rl_1_lin_mean / _vars.REF_UPA)
+
+rl_2            = p_sl_nom + p_model_2
+rl_2_lin        = _vars.REF_UPA * (10 ** ( ( rl_2 / 10 )))
+rl_2_lin_mean     = np.mean(rl_2_lin,axis=0)
+rl_2_db_mean      = 10*np.log10(rl_2_lin_mean / _vars.REF_UPA)
 
 
-import scipy.interpolate as interp
+plt.figure();plt.plot(p_fs,rl_1_db_mean-p_sl_nom)
+plt.figure();plt.plot(p_fs,rl_2_db_mean-p_sl_nom)
+
+
+
+
 
 
 

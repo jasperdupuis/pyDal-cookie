@@ -10,6 +10,18 @@ instead of managing globals across multiple files
 import numpy as np
 import os
 
+
+FMAX = 300 # space issues
+
+"""
+LISTS OF USEFUL THINGS
+"""
+STANDARDS       = ['STANAG', 'ISO']
+HYDROS          = ['NORTH','SOUTH']
+MTHS            = ['J','F']
+YEARS           = ['2019','2020','All']
+
+
 """
 RUN SELECTION VARIABLES
 """
@@ -42,7 +54,6 @@ MATH / PHYSICS VARIABLES
 DEG_TO_RAD = np.pi / 180 
 
 
-
 """
 
 ML VARIABLES
@@ -58,28 +69,37 @@ X_SCALING           = 20
 Y_SCALING           = 100
 
 # PROCEDURAL STUFF, NEEDNT CHANGE OFTEN ( / EVER)
-MIN_F_INDEX_ML              = 28 
+MIN_F_INDEX_ML              = 3 
 MAX_F_INDEX_ML              = 998
 NUM_ML_WORKER_THREADS       = 1 # higher numbers should but dont work.
-FRACTION_VALIDATION         = 0.1
-FRACTION_TEST               = 0.2
-FRACTION_TRAIN              = 0.7
 
 # DATA SPLIT
-TRAIN       = 0.9
+TRAIN       = 0.8
 TEST        = 0.1
-HOLDBACK    = 0.0
+HOLDBACK    = 0.1
 
 
 # ML MODEL PARAMETERS
 EPOCHS              = 5
-BATCH_SIZE          = 2**8
+BATCH_SIZE          = 2**6
 N_HIDDEN_NODES      = 2**9
 N_HIDDEN_LAYERS     = 1 # not yet implemented
 LEARNING_RATE       = 0.01
 N_WORKERS           = 2
 LEN_SMOOTHING       = 1
 
+
+"""
+
+ML MODEL HYPERPARAMS, VARIOUS KINDS
+
+"""
+# x- and y-dim only, no frequency 
+LIST_N_LAYERS_1D        = [1]
+LIST_N_NODES_1D         = [14,20,26,32,38] #,512]
+# x and y, or y and f together.
+LIST_N_LAYERS_2D        = [2,4,6,8]
+LIST_N_NODES_2D         = [14,20,26,32,38] #,512]
 
 """
 
