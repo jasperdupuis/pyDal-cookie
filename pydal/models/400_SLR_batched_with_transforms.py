@@ -24,7 +24,7 @@ GENERATE_DATA   = False
 LOAD_DATA       = False
 SINGLE_YEAR     = False
 COMPARE_YEARS   = False
-COMPARE_P_AND_M = False
+COMPARE_P_AND_M = True
 
 STANDARD        = 'STANAG'
 # STANDARD        = 'ISO'
@@ -51,7 +51,9 @@ def get_and_concatenate_lists_of_grams_and_xy(
     for r in p_run_list[1:]:
         spec_dict,N   = \
             pydal.utils.get_spectrogram_file_as_dict(
-                r, p_dir_spec)
+                r, 
+                p_dir_spec                
+                )
         xx          = spec_dict [ 'X' ] 
         yy          = spec_dict [ 'Y' ] 
         # # decibels
@@ -130,8 +132,6 @@ def store_concat_arrays(
         dir_spec,
         p_fname)
     return
-
-
 
 
 
@@ -236,6 +236,8 @@ if __name__ == '__main__':
                     p_plot          = True,
                     p_track_dist_m  = track_dist)
                 
+        
+                
     if COMPARE_YEARS:
         r2019   = SLR_with_transforms.load_concat_arrays('concatenated_data_2019.pkl')
         r2020   = SLR_with_transforms.load_concat_arrays('concatenated_data_2020.pkl')
@@ -335,8 +337,7 @@ if __name__ == '__main__':
         fig2.suptitle(r'$\varepsilon$, assuming CPA reference and '+STANDARD+' standard\n South hydrophone'); plt.xscale('log')
         ax1.set_xlabel('Frequency (Hz)')
         ax1.set_ylabel('Estimated error, $dB ref 1{\mu}Pa^2 / Hz @ 1m$')
-        ax2.legend()
-    
+        ax2.legend()    
     
     
 if COMPARE_P_AND_M:
@@ -441,7 +442,7 @@ if COMPARE_P_AND_M:
     
         # South, y axis
         fname = fname_std + 'south_y'
-        fig, axs = plt.subplots(2,figsize=(10,8)) # axs[0] is top one
+        fig, axs = plt.subplots(2,figsize=(8,6)) # axs[0] is top one
         fig.suptitle('P-value and slope for SLR(y)\n' + STD + ', ' + 'South hydrophone')
         axs[0].plot(f,sy2019_result_db['p'],label='2019 p-value');
         axs[0].plot(f,sy2020_result_db['p'],label='2020 p-value');

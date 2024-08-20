@@ -191,7 +191,9 @@ def get_spectrogram_file_as_dict(
         result['South_Spectrogram'] = result['South_Spectrogram'] [:,:-1]
         result['North_Spectrogram'] = result['North_Spectrogram'] [:,:-1]
     
-    
+    """
+    bullshit to fix range bullshit. Fuck.
+    """
     if p_rotation_rad == 0 : 
         x = 1 # Do nothing
     else: 
@@ -390,6 +392,7 @@ def get_max_index(xx,yy,ss,nn):
         # Need to truncate xx and yy to fit ss and nn
         return nn[1]
     
+    
 def concat_dictionaries(dict1,
                         dict2,
                         excl_list = [ 'Transform', 'Frequency']):
@@ -448,9 +451,10 @@ def L1_error(y,y_hat):
     """
     same length required.
     """
-    delta = y_hat-y
-    L1 = np.sum(delta) / len(y)
-    return L1
+    delta = np.abs(y_hat-y)
+    L1 = np.sum(delta) 
+    MAE = L1 / len(y)
+    return L1,MAE
 
 
 def L2_error(y,y_hat):
@@ -458,5 +462,6 @@ def L2_error(y,y_hat):
     
     """
     delta = (y_hat-y)**2
-    L2 = np.sum(delta) / len(y)
-    return L2
+    L2 = np.sum(delta) 
+    MSE = L2 / len(y)
+    return L2,MSE

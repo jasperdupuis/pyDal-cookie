@@ -31,12 +31,14 @@ import pydal.models.SLR_with_transforms
 # Root dir for saving / loading models
 ROOT_DIR            = _dirs.DIR_SINGLE_F_1D_NN
 
-# Control flags
-TRAIN_MODELS        = False
-HYDRO               = 'North'
-VISUALIZE_MODELS    = True
-FMIN                = 49
-FMAX                = 1000   
+# Control params
+TRAIN_MODELS        = True
+VISUALIZE_MODELS    = False
+
+COORDINATE          ='X'
+# HYDRO               = 'South'
+FMIN                = 10
+FMAX                = 300   
 
 fname2019   = r'concatenated_data_2019.pkl'
 fname2020   = r'concatenated_data_2020.pkl'
@@ -156,6 +158,11 @@ if __name__ == "__main__":
     fixed_seed  = torch.manual_seed(_vars.SEED)
     
     if TRAIN_MODELS:
+    
+        if COORDINATE == 'X':
+            features = x
+        if COORDINATE == 'Y':
+            features = y           
 
         for HYDRO in _vars.HYDROS:
             if HYDRO.capitalize() == 'North' :
@@ -166,6 +173,8 @@ if __name__ == "__main__":
             for n_layer in _vars.LIST_N_LAYERS_1D:
                 for n_node in _vars.LIST_N_NODES_1D:
                     dir_target              = functions.set_directory_struct(ROOT_DIR,HYDRO)
+                    dir_target            = dir_target + COORDINATE + r'/'
+                    pydal.utils.check_make_dir(dir_target)
                     dir_target            = dir_target + str(n_layer) + r' layers/'
                     pydal.utils.check_make_dir(dir_target)
                     dir_target            = dir_target + str(n_node) + r' nodes/'
@@ -185,12 +194,12 @@ if __name__ == "__main__":
                         f_index     = pydal.utils.find_target_freq_index(freq_targ, f)                
                         # Assign features and labels here. 
                         received_level  = rl[f_index,:] # 1D numpy array
-                        labels          = received_level # 1D numpy array
+                        labels          = received_level # 1D numpy array                                                 
                         
                         # train data
-                        dset_full               = classes.f_y_orca_dataset(y, labels)
-                        test_size               = int ( len(y) * _vars.TEST)
-                        hold_size               = int ( len(y) * _vars.HOLDBACK)
+                        dset_full               = classes.f_y_orca_dataset(features, labels)
+                        test_size               = int ( len(features) * _vars.TEST)
+                        hold_size               = int ( len(features) * _vars.HOLDBACK)
                         train_size              = len(dset_full) - test_size - hold_size
                         dset_train,dset_test,dset_hold    = \
                             torch.utils.data.random_split(
@@ -225,7 +234,7 @@ if __name__ == "__main__":
                             dataloader_train,
                             dataloader_test,
                             _vars.BATCH_SIZE,
-                            _vars.EPOCHS
+                            _vars.EPOCHS_1D
                             )
                         
                         
@@ -274,66 +283,83 @@ if __name__ == "__main__":
         #testing value:
         fname_get = r'C:/Users/Jasper/Documents/Repo/pyDal/pyDal-cookie/pydal/models/saved_models_1d_single_f/hdf5_spectrogram_bw_1.0_overlap_90/NORTH/1 layers/14 nodes/0053.trch' 
         """
-        n_layer = 1
-        n_node = 14
-        dir_target              = ROOT_DIR
-        dir_target              = functions.set_directory_struct(ROOT_DIR,HYDRO)
-        dir_target              = dir_target + str(n_layer) + r' layers/'
-        dir_target              = dir_target + str(n_node) + r' nodes/'
-        os.mkdir(dir_target+'figs/')
+        for HYDRO in _vars.HYDROS:
+            if HYDRO.capitalize() == 'North' :
+                rl = rl_n
+            if HYDRO.capitalize() == 'South' :
+                rl = rl_s
+                
+            for n_layer in _vars.LIST_N_LAYERS_1D:
+                for n_node in _vars.LIST_N_NODES_1D:
+                    dir_target              = functions.set_directory_struct(ROOT_DIR,HYDRO)
+                    dir_target            = dir_target + COORDINATE + r'/'
+                    pydal.utils.check_make_dir(dir_target)
+                    dir_target            = dir_target + str(n_layer) + r' layers/'
+                    pydal.utils.check_make_dir(dir_target)
+                    dir_target            = dir_target + str(n_node) + r' nodes/'
+                    pydal.utils.check_make_dir(dir_target)
 
-        # must assign RL based on north or south hydrophone
-        if HYDRO.capitalize() == 'North' :
-            rl = rl_n
-        if HYDRO.capitalize() == 'South' :
-            rl = rl_s
-        
-        # Visualize model result against real data
-        #Set up the cartesian geometry
-        xmin = -1
-        xmax = 1
-        ymin = -1
-        ymax = 1
-    
-        x_range     = np.arange(xmin,xmax,step=0.01)
-        y_range     = np.arange(ymin,ymax,step=0.01)
-        x_size      = xmax - xmin
-        y_size      = ymax - ymin
-        x_surface   = np.ones((y_size,x_size)) # dim1 is column index, dim2 is row index
-        y_surface   = (x_surface[:,:].T * np.arange(ymin,ymax)*-1).T # hackery to use the numpy functions, no big deal
-        x_surface   = x_surface[:,:] * np.arange(xmin,xmax)
-
-        list_files = os.listdir(dir_target)
-        list_files = [x for x in list_files if not x == 'figs']
-        for fname in list_files:
-            # Get the zero-mean data set
-            freq_targ       = int(fname.split('.')[0])
-            f_index         = pydal.utils.find_target_freq_index(freq_targ, f)
-            received_level  = rl[f_index,:] * _vars.RL_SCALING # 1D numpy array
-            # GEt the model and create a data set
-            fname_get       = dir_target + fname
-            model           = classes.DeepNetwork_1d(n_layer,n_node)
-            model.load_state_dict(torch.load(fname_get))
-            model.eval()
-            result          = []
-            test            = torch.tensor(y_range)
-            with torch.no_grad():
-                for t in test:
-                    t = t.float()
-                    t = t.reshape((1,1))
-                    result.append(model.neural_net(t))                
+                    try: 
+                        os.mkdir(dir_target+'figs/')
+                    except:
+                        pass
+                    # Visualize model result against real data
+                    #Set up the cartesian geometry
+                    xmin = -1
+                    xmax = 1
+                    ymin = -1
+                    ymax = 1
+                
+                    x_range     = np.arange(xmin,xmax,step=0.01)
+                    y_range     = np.arange(ymin,ymax,step=0.01)
+                    x_size      = xmax - xmin
+                    y_size      = ymax - ymin
+                    x_surface   = np.ones((y_size,x_size)) # dim1 is column index, dim2 is row index
+                    y_surface   = (x_surface[:,:].T * np.arange(ymin,ymax)*-1).T # hackery to use the numpy functions, no big deal
+                    x_surface   = x_surface[:,:] * np.arange(xmin,xmax)
             
-            result          = np.array(result) * _vars.RL_SCALING
-
-            # Plot the model results over the zero mean data
-            fig, ax = plt.subplots(nrows = 1, ncols=1, figsize=(10,8))
-            ax.scatter(y,received_level,color='blue',marker='.',label='real data')
-            ax.scatter(y_range,result,color='red',marker='.',label='model fit')
-            ax.set_ylim((-25,25))
-            ax.legend()
-            fig.supxlabel('Y-position in range X-Y system (m)', fontsize=12)
-            fig.supylabel('Reconstructed spectral response, dB ref 1 ${\mu}Pa^2 / Hz$', fontsize=12)
-            plt.tight_layout()
-            plt.savefig(dir_target + r'figs\\' + fname.split('.')[0] + '.jpeg')
-            plt.close('all')
-    
+                    list_files = os.listdir(dir_target)
+                    list_files = [x for x in list_files if not x == 'figs']
+                    for fname in list_files:
+                        if 'losses' in fname: continue
+                        if 'figs' in fname: continue
+                        # Get the zero-mean data set
+                        freq_targ       = int(fname.split('.')[0])
+                        f_index         = pydal.utils.find_target_freq_index(freq_targ, f)
+                        received_level  = rl[f_index,:] * _vars.RL_SCALING # 1D numpy array
+                        # GEt the model and create a data set
+                        fname_get       = dir_target + fname
+                        model           = classes.DeepNetwork_1d(n_layer,n_node)
+                        model.load_state_dict(torch.load(fname_get))
+                        model.eval()
+                        result          = []
+                        if COORDINATE == 'X':
+                            features = x_range
+                        if COORDINATE == 'Y':
+                            features = y_range
+                        test            = torch.tensor(features)
+                        with torch.no_grad():
+                            for t in test:
+                                t = t.float()
+                                t = t.reshape((1,1))
+                                result.append(model.neural_net(t))                
+                        
+                        result          = np.array(result) * _vars.RL_SCALING
+            
+                        # Plot the model results over the zero mean data
+                        fig, ax = plt.subplots(nrows = 1, ncols=1, figsize=(10,8))
+                        if COORDINATE == 'Y':
+                            ax.scatter(y,received_level,color='blue',marker='.',label='real data')
+                            ax.scatter(y_range,result,color='red',marker='.',label='model fit')
+                            fig.supxlabel('Y-position in range X-Y system (m)', fontsize=12)
+                        if COORDINATE == 'X':
+                            ax.scatter(x,received_level,color='blue',marker='.',label='real data')
+                            ax.scatter(x_range,result,color='red',marker='.',label='model fit')    
+                            fig.supxlabel('X-position in range X-Y system (m)', fontsize=12)
+                        ax.set_ylim((-25,25))
+                        ax.legend()
+                        fig.supylabel('Reconstructed spectral response, '+ str(freq_targ).zfill(3) +'Hz, dB ref 1 ${\mu}Pa^2 / Hz$', fontsize=12)
+                        plt.tight_layout()
+                        plt.savefig(dir_target + r'figs\\' + fname.split('.')[0] + '.jpeg')
+                        plt.close('all')
+                

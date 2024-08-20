@@ -18,6 +18,7 @@ import functions
 
 import pydal.models.SLR_with_transforms as SLR_with_transforms
 
+COORDINATE = 'Y'
 
 for YEAR in _vars.YEARS:
     if YEAR == 'All' : 
@@ -40,48 +41,91 @@ for YEAR in _vars.YEARS:
     data['North']   = rl_n / _vars.RL_SCALING #normalize to roughly -1/1    
     data['X']       = data['X'] / _vars.X_SCALING
     data['Y']       = data['Y'] / _vars.Y_SCALING
+    # data['South']   = rl_s / _vars.RL_SCALING #normalize to roughly -1/1    
+    # data['North']   = rl_n / _vars.RL_SCALING #normalize to roughly -1/1    
+    # data['X']       = data['X'] / _vars.X_SCALING
+    # data['Y']       = data['Y'] / _vars.Y_SCALING
         
     for STANDARD in _vars.STANDARDS:
 
         masked_data = SLR_with_transforms.mask_data(data,STANDARD)
         
-        # m,b,r,p,err
-        n_result_db     = SLR_with_transforms.SLR_with_y_transform(
-            p_x             = masked_data['X'],
-            p_y             = masked_data['Y'],
-            p_theta         = np.zeros_like(masked_data['X']), #not used placeholder
-            p_gram          = masked_data['North'],
-            p_x_transform   = pydal.data_transforms.x_transform_y_only,
-            # p_x_transform   = pydal.data_transforms.x_transform_x_only,
-            p_y_transform   = pydal.data_transforms.no_2d_transform
-            )
-
-        d_n = functions.set_directory_struct(_dirs.DIR_SINGLE_F_SLR,'NORTH')
-        f_n =  STANDARD + r'_' + YEAR + '.pkl'
-        pydal.utils.dump_pickle_file(
-            n_result_db,
-            p_data_dir = d_n,
-            p_fname     = f_n)
-
+        if COORDINATE == 'X':
+            
+            # m,b,r,p,err
+            n_result_db     = SLR_with_transforms.SLR_with_y_transform(
+                p_x             = masked_data['X'],
+                p_y             = masked_data['Y'],
+                p_theta         = np.zeros_like(masked_data['X']), #not used placeholder
+                p_gram          = masked_data['North'],
+                p_x_transform   = pydal.data_transforms.x_transform_x_only,
+                # p_x_transform   = pydal.data_transforms.x_transform_x_only,
+                p_y_transform   = pydal.data_transforms.no_2d_transform
+                )
+    
+            d_n = functions.set_directory_struct(_dirs.DIR_SINGLE_F_SLR,'NORTH') + '\\' + COORDINATE + r'\\'
+            f_n =  STANDARD + r'_' + YEAR + '.pkl'
+            pydal.utils.dump_pickle_file(
+                n_result_db,
+                p_data_dir = d_n,
+                p_fname     = f_n)
+    
+            
+            s_result_db     = SLR_with_transforms.SLR_with_y_transform(
+                p_x             = masked_data['X'],
+                p_y             = masked_data['Y'],
+                p_theta         = np.zeros_like(masked_data['X']), #not used placeholder
+                p_gram          = masked_data['South'],
+                p_x_transform   = pydal.data_transforms.x_transform_x_only,
+                # p_x_transform   = pydal.data_transforms.x_transform_x_only,
+                p_y_transform   = pydal.data_transforms.no_2d_transform
+                )
+    
+            d_s = functions.set_directory_struct(_dirs.DIR_SINGLE_F_SLR,'SOUTH')+ '\\' + COORDINATE + r'\\'
+            f_s = STANDARD + r'_' + YEAR + '.pkl'
+            pydal.utils.dump_pickle_file(
+                s_result_db,
+                p_data_dir = d_s,
+                p_fname = f_s)
         
-        s_result_db     = SLR_with_transforms.SLR_with_y_transform(
-            p_x             = masked_data['X'],
-            p_y             = masked_data['Y'],
-            p_theta         = np.zeros_like(masked_data['X']), #not used placeholder
-            p_gram          = masked_data['South'],
-            p_x_transform   = pydal.data_transforms.x_transform_y_only,
-            # p_x_transform   = pydal.data_transforms.x_transform_x_only,
-            p_y_transform   = pydal.data_transforms.no_2d_transform
-            )
-
-        d_s = functions.set_directory_struct(_dirs.DIR_SINGLE_F_SLR,'NORTH')
-        f_s = STANDARD + r'_' + YEAR + '.pkl'
-        pydal.utils.dump_pickle_file(
-            s_result_db,
-            p_data_dir = d_s,
-            p_fname = f_s)
         
-        
+        if COORDINATE == 'Y': #different x_Transform argument to main function
+            
+            # m,b,r,p,err
+            n_result_db     = SLR_with_transforms.SLR_with_y_transform(
+                p_x             = masked_data['X'],
+                p_y             = masked_data['Y'],
+                p_theta         = np.zeros_like(masked_data['X']), #not used placeholder
+                p_gram          = masked_data['North'],
+                p_x_transform   = pydal.data_transforms.x_transform_y_only,
+                # p_x_transform   = pydal.data_transforms.x_transform_x_only,
+                p_y_transform   = pydal.data_transforms.no_2d_transform
+                )
+    
+            d_n = functions.set_directory_struct(_dirs.DIR_SINGLE_F_SLR,'NORTH') + '\\' + COORDINATE + r'\\'
+            f_n =  STANDARD + r'_' + YEAR + '.pkl'
+            pydal.utils.dump_pickle_file(
+                n_result_db,
+                p_data_dir = d_n,
+                p_fname     = f_n)
+    
+            
+            s_result_db     = SLR_with_transforms.SLR_with_y_transform(
+                p_x             = masked_data['X'],
+                p_y             = masked_data['Y'],
+                p_theta         = np.zeros_like(masked_data['X']), #not used placeholder
+                p_gram          = masked_data['South'],
+                p_x_transform   = pydal.data_transforms.x_transform_y_only,
+                # p_x_transform   = pydal.data_transforms.x_transform_x_only,
+                p_y_transform   = pydal.data_transforms.no_2d_transform
+                )
+    
+            d_s = functions.set_directory_struct(_dirs.DIR_SINGLE_F_SLR,'SOUTH')+ '\\' + COORDINATE + r'\\'
+            f_s = STANDARD + r'_' + YEAR + '.pkl'
+            pydal.utils.dump_pickle_file(
+                s_result_db,
+                p_data_dir = d_s,
+                p_fname = f_s)
         
         
         

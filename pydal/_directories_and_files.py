@@ -24,6 +24,8 @@ DATA SOURCE DIRECTORIES
 
 """
 if not (YEAR == 2020):# 2019 data only :
+    DIR_RANGE_DSR_RESULT = \
+        r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\2019-Orca Ranging\Range Data Amalg\ES0451_MOOSE_OTH_DYN'
     DIR_BINARY_HYDROPHONE = \
         r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\raw\2019-Orca Ranging\Range Data Amalg\ES0451_MOOSE_OTH_DYN\RAW_TIME\\'
     # 2019 data only
@@ -87,12 +89,26 @@ DIR_SL_RESULTS_LOGR = \
 DIR_SL_RESULTS_RAM = \
     r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\processed\SL results RAM\\'
 
-
 """
 
 """
+DIR_RESULT = \
+    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\pydal\results\\'
+DIR_RESULT_AMBIENTS = \
+    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\pydal\results\Ambients\\'
 DIR_RESULT_SLR =\
     r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\pydal\results\SLR\\'
+DIR_RESULT_NOISEBAND =\
+    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\pydal\results\Noiseband\\'
+DIR_RESULT_RESIDUALS_AND_BIAS =\
+    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\pydal\results\Residuals and Bias\\'
+DIR_RESULT_LME =\
+    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\pydal\results\Lloyds Mirror\\'
+DIR_RESULT_SSP =\
+    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\pydal\results\Soundspeed\\'
+DIR_RESULT_CORRELATION =\
+    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\pydal\results\Correlation\\'
+
 
 """
 

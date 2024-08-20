@@ -336,9 +336,9 @@ def process_h5_timeseries_to_spectrograms_from_run_list(
             continue #I  made some mistakes... must reload these trk files properly later
         fname_hdf5 = target_dir + r'\\'+ runID + r'_data_timeseries.hdf5'           
         if os.path.exists(fname_hdf5): 
-            continue
-            # os.remove(fname_hdf5)
-            # Will usually want to re-write when running a batch.
+            hps=1
+            # continue # Will usually want to re-write when running a batch.
+            os.remove(fname_hdf5)
         temp = dict()
         row = p_df[ p_df ['Run ID'] == runID ]
         
@@ -353,6 +353,24 @@ def process_h5_timeseries_to_spectrograms_from_run_list(
             track = Range_Track()
             track.load_process_specifications(p_range_dictionary)
             track.load_data_track(fname)
+            if r'DRF' in runID: # 
+                """
+                need to fix range fuckup
+                2019 data is already rotated!
+                2020 data is not! 
+                fuck me!
+                how hard is Bruce's fucking job??
+                """
+                rotate      = _vars.TRACK_ROTATION_RADS
+                x           = track.data_track_df[p_range_dictionary['Propeller X string']]
+                y           = track.data_track_df[p_range_dictionary['Propeller Y string']]
+                X,  Y       = pydal.utils.rotate(x,y,rotate)
+                track.data_track_df[p_range_dictionary['Propeller X string']] \
+                    = X
+                track.data_track_df[p_range_dictionary['Propeller Y string']] \
+                    = Y
+                
+ 
             start_s_since_midnight, total_s = \
                 track.trim_track_data(r = p_range_dictionary['Track Length (m)'] / 2,
                     prop_x_string = p_range_dictionary['Propeller X string'],
@@ -418,7 +436,7 @@ if __name__ == '__main__':
     MANUAL_RUNS = False
     SINGLE_RUN  = False
 
-    TYPE    = 'AM'
+    TYPE    = 'DR'
     MTH     = 'F' # J is 2019, F is 2020
     MACHINE = 'X'
     SPEED   = 'X'

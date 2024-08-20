@@ -11,9 +11,10 @@ import torch.nn as nn
 import pydal._variables as _vars
 
 class SLR_1d():
-    def __init__(self,f,m):
+    def __init__(self,f,m,b):
         self.f = f
         self.m = m 
+        self.b = b
         return
     
     def neural_net(self,x):

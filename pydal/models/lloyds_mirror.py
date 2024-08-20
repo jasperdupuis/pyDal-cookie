@@ -12,88 +12,144 @@ see https://acousticstoday.org/wp-content/uploads/2017/07/Article_2of3_from_ATCO
 import numpy as np
 import matplotlib.pyplot as plt
 
-"""
-Lloyds mirror in deep water, from pages ~ 20 in Jensen
-"""
+import pydal._directories_and_files as _dirs
+import pydal._thesis_constants as _thesis
 
-z_r     = 20
-c       = 1500
-f       = 5000
-lamb    = c/f
-
-#Pick ONE of the two z_s terms below:
-# z_s     = 3.5
-z_s     = 6*lamb
-refl    = -1
-mu      = refl # track naming here
-
-# COA page 20
-# Do it for a range of Rs and a fixed f first.
-k       = 2 * np.pi / lamb
-R       = np.arange(1,100000) # slant distance from source projected to surface, to the receiver
-
-p_mag   = (2 / R) * np.abs ( np.sin ( k * z_s * z_r / R  ) )
-# p2      = 10*np.log10(p_mag**2)
-p2      = np.log10(p_mag**2)
-plt.figure();plt.plot(R,p2);plt.xscale('log');plt.xlabel('Distance (m)');plt.title('COA page 20 LME' + str(f) + ' Hz')
-
-# Carey Equation 4
-# Acoustics Today 2009
-p_ref           = 1
-rho             = 1000 #kg per m3
-ppconj_real     = ( p_ref ** 2 ) * ( 1 / (R**2) )
-ppconj_real     = ppconj_real \
-                * ( 1 \
-                + mu \
-                + ( 2 * mu * np.cos(2 * k * z_r * z_s / R ) ) \
-                    )
-
-
-I               = 1 / (2 * rho * c)
-I               = I * ppconj_real
-plt.plot(np.log10(I))
-
-#Venditts ten challenges to measure URN paper
-# TL = 20 log ( sin ( kd sin ( theta ) ) ) + 20 log r
-theta   = np.arctan(z_s / R)
-k       = 2 * np.pi / lamb
-TL      = 20 * np.log10 ( np.sin( k * z_s * np.sin(theta))) + 20*np.log10(R)
-plt.figure();plt.plot(R,TL);plt.xscale('log');plt.xlabel('Distance (m)');plt.title('Vendittis LME,' + str(f) + ' Hz')
-
-
-# COA page 20
-# Do it for a range of Rs and a fixed f first.
-f       = np.arange(1,100000)
-lamb    = c/f
-k       = 2 * np.pi / lamb
 R       = 100
-p_mag   = (2 / R) * np.abs ( np.sin ( k * z_s * z_r / R  ) )
-p2      = 10*np.log10(p_mag**2)
-plt.figure();plt.plot(f,p2);plt.xscale('log');plt.xlabel('Frequency (Hz)');plt.title('COA page 20 LME, ' + str(R) + ' m')
+# R       = np.arange(0,1000)
+# f       = 70
+f       = np.arange(10,1000)
+z_s     = 3
+z_r_s   = 41
+z_r_n   = 25
+c       = 1500
+lamb    = c/f
+k       = 2 * np.pi / lamb
+theta_n   = np.arctan(z_r_n / R)
+theta_s   = np.arctan(z_r_s / R)
 
-#Venditts ten challenges to measure URN paper
+"""
+
+Venditts ten challenges to measure URN paper
+
+Equations 1 and 2.
+
+in the paper, d == z_s (not bottom depth)
+
+"""
+
+# # TL = 20 log ( sin ( kd sin ( theta ) ) ) + 20 log r # Directly from paper
+# theta   = np.arctan(z_r / R)
+# TL      = 20 * np.log10 ( np.sin( k * z_s * np.sin(theta))) #-20*np.log10(R)
+# plt.figure();plt.plot(R,TL);plt.xscale('log');plt.xlabel('Distance (m)');plt.title('Vendittis LME eq1,' + str(f) + ' Hz')
+# plt.plot(R,-20*np.log10(R),label='20 Log R')
+# plt.legend()
+
+# TL_simple = 20 * np.log10 ( 2 * k * z_s * np.sin(theta)) - 20*np.log10(R)
+# plt.figure();plt.plot(R,TL_simple);plt.xscale('log');plt.xlabel('Distance (m)');plt.title('Vendittis LME eq 2,' + str(f) + ' Hz')
+# # plt.figure();plt.plot(R,TL_simple);plt.xlabel('Distance (m)');plt.title('Vendittis LME eq 2,' + str(f) + ' Hz')
+# plt.plot(R,-20*np.log10(R),label='20 Log R')
+# plt.legend()
+
+
+"""
+COA page 15, equation 1.6
+Additional expansions in equations 1.7
+
+Explicit formula for p(r,z) using complex exponentials
+"""
+R1_s      = np.sqrt( R**2 + ( z_r_s - z_s ) **2 )
+R2_s      = np.sqrt( R**2 + ( z_r_s + z_s ) **2 )
+R1_n      = np.sqrt( R**2 + ( z_r_n - z_s ) **2 )
+R2_n      = np.sqrt( R**2 + ( z_r_n + z_s ) **2 )
+
+p_r_z_s   = (np.exp( 1j * k * R1_s ) / R1_s) - (np.exp( 1j * k * R2_s ) / R2_s)
+p2_s      = np.abs(p_r_z_s)**2
+p2db_s    = 10*np.log10(p2_s)
+
+p_r_z_n   = (np.exp( 1j * k * R1_n ) / R1_n) - (np.exp( 1j * k * R2_n ) / R2_n)
+p2_n      = np.abs(p_r_z_n)**2
+p2db_n    = 10*np.log10(p2_n)
+
+
+plt.figure()
+plt.plot(f,p2db_s,label='South hydrophone');
+plt.plot(f,p2db_n,label='North hydrophone');
+plt.xscale('log');
+plt.xlabel('Frequency (Hz)',fontsize=_thesis.SIZE_AX_LABELS);
+plt.ylabel('LME @ 100 m, dB ref $1{\mu}Pa^2 / Hz$',fontsize=_thesis.SIZE_AX_LABELS)
+plt.legend(loc='lower left')
+
+figname =  'lloyds_mirror'
+plt.savefig(fname = _dirs.DIR_RESULT_LME  \
+            + figname +'.eps',
+            bbox_inches='tight',
+            format='eps',
+            dpi = _thesis.DPI)    
+plt.savefig(fname = _dirs.DIR_RESULT_LME  \
+            + figname +'.pdf',
+            bbox_inches='tight',
+            format='pdf',
+            dpi = _thesis.DPI)
+plt.savefig(fname = _dirs.DIR_RESULT_LME  \
+            + figname +'.png',
+            bbox_inches='tight',
+            format='png',
+            dpi = _thesis.DPI)
+# plt.close('all')
+
+"""
+
+Venditts ten challenges to measure URN paper
+
+Good plot script:
+
+"""
+"""
 theta   = np.arctan(z_s / R)
 k       = 2 * np.pi / lamb
 TL      = 20 * np.log10 ( np.sin( k * z_s * np.sin(theta))) + 20*np.log10(R)
-plt.figure();plt.plot(f,TL);plt.xscale('log');plt.xlabel('Frequency (Hz)');plt.title('Vendittis LME,' + str(R) + ' m')
-    
+plt.figure(figsize=_thesis.FIGSIZE);
+plt.plot(f,TL);
+plt.xscale('log');
+plt.xlabel('Frequency (Hz)',fontsize=_thesis.SIZE_AX_LABELS);
+plt.ylabel('LME @ 100 m, dB ref $1{\mu}Pa^2 / Hz$',fontsize=_thesis.SIZE_AX_LABELS)
 
+figname =  'lloyds_mirror'
+plt.savefig(fname = _dirs.DIR_RESULT_LME  \
+            + figname +'.eps',
+            bbox_inches='tight',
+            format='eps',
+            dpi = _thesis.DPI)    
+plt.savefig(fname = _dirs.DIR_RESULT_LME  \
+            + figname +'.pdf',
+            bbox_inches='tight',
+            format='pdf',
+            dpi = _thesis.DPI)
+plt.savefig(fname = _dirs.DIR_RESULT_LME  \
+            + figname +'.png',
+            bbox_inches='tight',
+            format='png',
+            dpi = _thesis.DPI)
+# plt.close('all')
+"""
 
 """
 Look at a gram for a run i choose at random from the run_list variable.
 """
-import pydal.utils
 
-dir_spec ,run_list  = pydal.utils.get_fully_qual_spec_path()
-p_runID             = run_list[16]
-gram_dict,N         = pydal.utils.get_spectrogram_file_as_dict(p_runID, dir_spec)    
+# import pydal.utils
 
-n                   = gram_dict['North_Spectrogram'][:50000,:]
-ndb                 = 10 * np.log10 (n) 
-s                   = gram_dict['South_Spectrogram'][:50000,:]
-sdb                 = 10 * np.log10 (s) 
+# dir_spec ,run_list  = pydal.utils.get_fully_qual_spec_path()
+# p_runID             = run_list[35]
+# gram_dict,N         = pydal.utils.get_spectrogram_file_as_dict(p_runID, dir_spec)    
+
+# n                   = gram_dict['North_Spectrogram'][:50000,:]
+# ndb                 = 10 * np.log10 (n) 
+# s                   = gram_dict['South_Spectrogram'][:50000,:]
+# sdb                 = 10 * np.log10 (s) 
 
 
-plt.figure();plt.imshow(ndb,aspect='auto',origin='lower');plt.title('North Gram');plt.colorbar()
-plt.figure();plt.imshow(sdb,aspect='auto',origin='lower');plt.title('South Gram');plt.colorbar()
+# plt.figure();plt.imshow(ndb,aspect='auto',origin='lower');plt.title('North Gram');plt.colorbar()
+# plt.figure();plt.imshow(sdb,aspect='auto',origin='lower');plt.title('South Gram');plt.colorbar()
 

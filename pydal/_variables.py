@@ -42,7 +42,7 @@ RUN SELECTION VARIABLES
 
 # A set of dynamic run parameters from Feb 2020.
 TYPE = 'DR'
-MTH = 'J'
+MTH = 'F'
 STATE = 'A'
 SPEED='X'        
 HEADING = 'X' #X means both
@@ -80,7 +80,7 @@ HOLDBACK    = 0.1
 
 
 # ML MODEL PARAMETERS
-EPOCHS              = 5
+EPOCHS_1D           = 2
 BATCH_SIZE          = 2**6
 N_HIDDEN_NODES      = 2**9
 N_HIDDEN_LAYERS     = 1 # not yet implemented
@@ -95,7 +95,7 @@ ML MODEL HYPERPARAMS, VARIOUS KINDS
 
 """
 # x- and y-dim only, no frequency 
-LIST_N_LAYERS_1D        = [1]
+LIST_N_LAYERS_1D        = [1] # , 2 ]
 LIST_N_NODES_1D         = [14,20,26,32,38] #,512]
 # x and y, or y and f together.
 LIST_N_LAYERS_2D        = [2,4,6,8]
@@ -108,7 +108,7 @@ ERROR ANALYSIS VARIABLES
 """
 
 Y_LENGTH    = 200
-N_Y_BINS    = 20
+N_Y_BINS    = 200
 
 
 
