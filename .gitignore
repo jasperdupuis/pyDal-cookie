@@ -6,6 +6,7 @@
 *.loss
 *.jpeg
 *.jpg
+*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
