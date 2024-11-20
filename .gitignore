@@ -1,6 +1,7 @@
 #
 *.pdf
 *.png
+*.eps
 *.trch
 *.pkl
 *.loss
