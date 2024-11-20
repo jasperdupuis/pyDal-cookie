@@ -17,7 +17,7 @@ FMAX = 300 # space issues
 LISTS OF USEFUL THINGS
 """
 STANDARDS       = ['STANAG', 'ISO']
-HYDROS          = ['NORTH','SOUTH']
+HYDROS          = ['SOUTH']#,'NORTH']
 MTHS            = ['J','F']
 YEARS           = ['2019','2020','All']
 
@@ -73,14 +73,33 @@ MIN_F_INDEX_ML              = 3
 MAX_F_INDEX_ML              = 998
 NUM_ML_WORKER_THREADS       = 1 # higher numbers should but dont work.
 
+
+#
+# ML VARIABLES - CORE WORK
+#
 # DATA SPLIT
-TRAIN       = 0.8
+# TRAIN       = 0.8
+# TEST        = 0.1
+# HOLDBACK    = 0.1
+# # ML MODEL PARAMETERS
+# EPOCHS_1D           = 2
+# BATCH_SIZE          = 2**6
+# N_HIDDEN_NODES      = 2**9
+# N_HIDDEN_LAYERS     = 1 # not yet implemented
+# LEARNING_RATE       = 0.01
+# N_WORKERS           = 2
+# LEN_SMOOTHING       = 1
+
+
+#
+# ML VARIABLES - LESS DATA MORE EPOCHS 14 NODE ONLY
+#
+# DATA SPLIT
+TRAIN       = 0.05
 TEST        = 0.1
-HOLDBACK    = 0.1
-
-
-# ML MODEL PARAMETERS
-EPOCHS_1D           = 2
+HOLDBACK    = 0.85
+# # ML MODEL PARAMETERS
+EPOCHS_1D           = 40
 BATCH_SIZE          = 2**6
 N_HIDDEN_NODES      = 2**9
 N_HIDDEN_LAYERS     = 1 # not yet implemented
@@ -96,7 +115,7 @@ ML MODEL HYPERPARAMS, VARIOUS KINDS
 """
 # x- and y-dim only, no frequency 
 LIST_N_LAYERS_1D        = [1] # , 2 ]
-LIST_N_NODES_1D         = [14,20,26,32,38] #,512]
+LIST_N_NODES_1D         = [14]#,20,26,32,38] #,512]
 # x and y, or y and f together.
 LIST_N_LAYERS_2D        = [2,4,6,8]
 LIST_N_NODES_2D         = [14,20,26,32,38] #,512]
@@ -172,7 +191,7 @@ RUN VARIABLES
 
 """
 FREQS = 10 + np.arange(190)
-TARGET_FREQ = 15
+TARGET_FREQ = 55
 NUM_DAY = '1' #all results will filter on trial day number.
 
 DIST_TO_CPA = 33

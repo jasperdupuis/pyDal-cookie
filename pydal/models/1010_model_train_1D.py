@@ -29,15 +29,17 @@ import pydal._variables as _vars
 import pydal.models.SLR_with_transforms
 
 # Root dir for saving / loading models
-ROOT_DIR            = _dirs.DIR_SINGLE_F_1D_NN
+# ROOT_DIR            = _dirs.DIR_SINGLE_F_1D_NN
+ROOT_DIR            = _dirs.DIR_SINGLE_F_1D_NN_MULTI_EPOCH
+
 
 # Control params
 TRAIN_MODELS        = True
 VISUALIZE_MODELS    = False
 
-COORDINATE          ='X'
+COORDINATE          ='Y'
 # HYDRO               = 'South'
-FMIN                = 10
+FMIN                = 30
 FMAX                = 300   
 
 fname2019   = r'concatenated_data_2019.pkl'
@@ -186,6 +188,7 @@ if __name__ == "__main__":
                         
                     for freq_targ in f:
                         if freq_targ > FMAX : break
+                        if freq_targ < FMIN : continue
                         fname = dir_target +  str(int(freq_targ)).zfill(4) + '.trch'
                         
                         if os.path.isfile(fname) : # check if file exists:

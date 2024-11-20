@@ -89,6 +89,9 @@ DIR_SL_RESULTS_LOGR = \
 DIR_SL_RESULTS_RAM = \
     r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\processed\SL results RAM\\'
 
+DIR_THESIS_IMGS = \
+    r'C:/Users/Jasper/Documents/Repo/pyDal/pyDal-cookie/pydal/results/__Thesis_figures\\'
+
 """
 
 """
@@ -108,6 +111,22 @@ DIR_RESULT_SSP =\
     r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\pydal\results\Soundspeed\\'
 DIR_RESULT_CORRELATION =\
     r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\pydal\results\Correlation\\'
+DIR_RESULT_PL_MODELS =\
+    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal\results\\'
+DIR_RESULT_PL_MODELS_PATBAY_ONLY =\
+    r'C:\Users\Jasper\Documents\Repo\pyDal\UWAEnvTools\results\\'
+DIR_RESULT_LOSS_CURVES =\
+    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\pydal\results\Loss Curves\\'
+DIR_RESULT_PL_QUANTIFICATION =\
+    r'C:/Users/Jasper/Documents/Repo/pyDal/pyDal-cookie/pydal/results/PL Quantification/'
+
+"""
+
+
+"""
+
+DIR_DATA_PROP_MODELS = \
+    r'C:\Users\Jasper\Documents\Repo\pyDal\pyDal-cookie\data\interim\PL_model_predictions\\'
 
 
 """
@@ -122,6 +141,8 @@ DIR_SINGLE_F_1D_NN = \
     r'C:/Users/Jasper/Documents/Repo/pyDal/pyDal-cookie/pydal/models/saved_models_1d_single_f/'
 DIR_SINGLE_F_2D_NN = \
     r'C:/Users/Jasper/Documents/Repo/pyDal/pyDal-cookie/pydal/models/saved_models_2d_single_f/'
+DIR_SINGLE_F_1D_NN_MULTI_EPOCH = \
+    r'C:/Users/Jasper/Documents/Repo/pyDal/pyDal-cookie/pydal/models/saved_models_1d_single_f_multi_epoch/'
 
 
 """ 

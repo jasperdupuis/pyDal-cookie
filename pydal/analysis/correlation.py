@@ -21,10 +21,18 @@ HYDRO = 'South' # Fixed, not looped over.
 
 ANALYSIS_FREQ_LIMIT = 300
 
+# # 2019
+# GENERATE_DATA       = True
+# GENERATE_DATA_2020  = False
+# VISUALIZE           = True
+# VISUALIZE_2020      = False
+
+# # 2020
 GENERATE_DATA       = False
 GENERATE_DATA_2020  = True
 VISUALIZE           = False
 VISUALIZE_2020      = True
+
 
 def get_and_sort_sample(x,y,rl_x,rl_y,length):
     """
@@ -220,22 +228,25 @@ if __name__ == "__main__":
         # fig,axs = plt.subplots(nrows=3,ncols=1,figsize = _thesis.FIGSIZE_TRIPLE_STACK )
         fig,axs = plt.subplots(nrows=3,ncols=1,figsize = (7,7) )
 
-        axs[0].scatter(f,pear_x,marker='o',label='X-coordinate')
-        axs[0].scatter(f,pear_y,marker='.',label='Y-coordinate')
+        axs[0].scatter(f,pear_x,marker='o',label='x-coordinate')
+        axs[0].scatter(f,pear_y,marker='.',label='y-coordinate')
         axs[0].set_ylabel('Pearson R' ,fontsize=_thesis.SIZE_AX_LABELS)        
+        axs[0].grid(which='both')
 
-        axs[1].scatter(f,p_x,marker='o',label='X-coordinate')
-        axs[1].scatter(f,p_y,marker='.',label='Y-coordinate')
+        axs[1].scatter(f,p_x,marker='o',label='x-coordinate')
+        axs[1].scatter(f,p_y,marker='.',label='y-coordinate')
         axs[1].set_ylabel('Pearson p-value' ,fontsize=_thesis.SIZE_AX_LABELS)
+        axs[1].grid(which='both')
 
-        axs[2].scatter(f,corr_x,marker='o',label='X-coordinate')
-        axs[2].scatter(f,corr_y,marker='.',label='Y-coordinate')
+        axs[2].scatter(f,corr_x,marker='o',label='x-coordinate')
+        axs[2].scatter(f,corr_y,marker='.',label='y-coordinate')
         axs[2].set_ylabel('Mean correlation' ,fontsize=_thesis.SIZE_AX_LABELS)
+        axs[2].grid(which='both')
         
         fig.align_ylabels()
         plt.legend(ncols=3,bbox_to_anchor=(0.5,3.65),loc='center')
         fig.supxlabel('Frequency (Hz)',fontsize=_thesis.SIZE_AX_LABELS)
-        
+       
 
         target_dir  = _dirs.DIR_RESULT_CORRELATION
         figname     =  'correlation_explanation_'+ HYDRO
@@ -291,22 +302,25 @@ if __name__ == "__main__":
         # fig,axs = plt.subplots(nrows=3,ncols=1,figsize = _thesis.FIGSIZE_TRIPLE_STACK )
         fig,axs = plt.subplots(nrows=3,ncols=1,figsize = (7,7) )
 
-        axs[0].scatter(f,pear_x,marker='o',label='X-coordinate')
-        axs[0].scatter(f,pear_y,marker='.',label='Y-coordinate')
+        axs[0].scatter(f,pear_x,marker='o',label='x-coordinate')
+        axs[0].scatter(f,pear_y,marker='.',label='y-coordinate')
         axs[0].set_ylabel('Pearson R' ,fontsize=_thesis.SIZE_AX_LABELS)        
+        axs[0].grid(which='both')
 
-        axs[1].scatter(f,p_x,marker='o',label='X-coordinate')
-        axs[1].scatter(f,p_y,marker='.',label='Y-coordinate')
+        axs[1].scatter(f,p_x,marker='o',label='x-coordinate')
+        axs[1].scatter(f,p_y,marker='.',label='y-coordinate')
         axs[1].set_ylabel('Pearson p-value' ,fontsize=_thesis.SIZE_AX_LABELS)
+        axs[1].grid(which='both')
 
-        axs[2].scatter(f,corr_x,marker='o',label='X-coordinate')
-        axs[2].scatter(f,corr_y,marker='.',label='Y-coordinate')
+        axs[2].scatter(f,corr_x,marker='o',label='x-coordinate')
+        axs[2].scatter(f,corr_y,marker='.',label='y-coordinate')
         axs[2].set_ylabel('Mean correlation' ,fontsize=_thesis.SIZE_AX_LABELS)
+        axs[2].grid(which='both')
         
         fig.align_ylabels()
         plt.legend(ncols=3,bbox_to_anchor=(0.5,3.65),loc='center')
         fig.supxlabel('Frequency (Hz)',fontsize=_thesis.SIZE_AX_LABELS)
-        
+
 
         target_dir  = _dirs.DIR_RESULT_CORRELATION
         figname     =  'correlation_explanation_2020_'+ HYDRO

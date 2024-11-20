@@ -89,10 +89,11 @@ def scatter_selected_data_single_f(
         target_freq = p_target_freq
         
         # The below plots the spectral time series for a selected frequency.        
-        fig,ax = plt.subplots()     
+        fig1,ax1 = plt.subplots()     
+        fig2,ax2 = plt.subplots()     
         # Adds the run data:
         for runID in p_runs:
-            if (p_day not in runID): continue # this run is not the right day
+            # if (p_day not in runID): continue # this run is not the right day
             if (p_speed not in runID): continue # this run is not the right speed
             if 'frequency' in runID: continue # this is not a run.
             if 'summary' in runID: continue # this is not a run
@@ -116,32 +117,54 @@ def scatter_selected_data_single_f(
                 r = np.sqrt(x*x + y*y) 
                 index_cpa = np.where(r==np.min(r))[0][0]
                 
+                if len(y) < len(samp_n):
+                    samp_n = samp_n[:len(y)]
+                    samp_s = samp_s[:len(y)]
+                if len(y) > len(samp_n):
+                    y = y[:len(samp_n)]
+                
+                samp_n_zmrl = samp_n - np.mean(samp_n)
+                samp_s_zmrl = samp_s - np.mean(samp_s)
+                
+                
                 if p_hyd == 'NORTH':
-                    ax = scatter_time_series(t_n, samp_n, ax, label=runID)
+                    # ax = scatter_time_series(t_n, samp_n, ax, label=runID)
+                    ax1 = scatter_time_series(y, samp_n, ax1, label=runID)
+                    ax2 = scatter_time_series(y, samp_n_zmrl, ax2, label=runID)
                     t_n = t_n-np.min(t_n)
                     # plt.axvline( t_n [ index_cpa ] )
             
                 if p_hyd == 'SOUTH':
-                    ax = scatter_time_series(t_s, samp_s, ax, label=runID)
+                    # ax = scatter_time_series(t_s, samp_s, ax, label=runID)
+                    ax1 = scatter_time_series(y, samp_s, ax1, label=runID)
+                    ax2 = scatter_time_series(y, samp_s_zmrl, ax2, label=runID)
                     t_s = t_s-np.min(t_s)
                     # plt.axvline( t_s [ index_cpa ] )
                     
             if p_type =='AM' :
                 if p_hyd == 'NORTH':
-                    ax.axhline(np.mean(samp_n))
+                    ax1.axhline(np.mean(samp_n))
                     # ax = scatter_time_series(t_n, samp_n, ax, label=runID)
                     # t_n = t_n-np.min(t_n)
                     
                 if p_hyd == 'SOUTH':
-                    ax.axhline(np.mean(samp_s))
+                    ax1.axhline(np.mean(samp_s))
                     # ax = scatter_time_series(t_s, samp_s, ax, label=runID)
                     # t_s = t_s-np.min(t_s)
                     
         if p_ambients_bool:
-            ax = plot_ambient_level_single_f(ax)
-        plt.title(str(target_freq) + ' Hz with ambient received levels as horizontal lines \n 1 Hz BW, db ref V^2')
-        plt.legend()
-        return fig,ax
+            ax1 = plot_ambient_level_single_f(ax1)
+        
+        ax1.axvline(0)
+        ax2.axvline(0)
+        
+        fig1.suptitle(str(target_freq) + ' Hz received levels in 1 Hz BW, db ref ${\mu}$Pa^2')
+        fig2.suptitle(str(target_freq) + ' Hz zero-mean received levels in 1 Hz BW, db ref ${\mu}$Pa^2')
+
+        # plt.legend()
+        return fig1,ax1.fig2,ax2
+    
+   
     
         
 if __name__ == '__main__':
@@ -155,7 +178,7 @@ if __name__ == '__main__':
     runs = pydal.utils.get_all_runs_in_dir(
         full_data_path )
     
-    fig,ax = scatter_selected_data_single_f(
+    fig_rl,ax_rl,fig_zmrl,ax_zmrl = scatter_selected_data_single_f(
         runs,
         full_data_path,
         _vars.TYPE,
@@ -165,6 +188,9 @@ if __name__ == '__main__':
         _vars.HYDROPHONE,
         p_decibel_bool = True,
         p_ambients_bool = False) #Which hydrophone in use.
+    
+    
+
 
 
 

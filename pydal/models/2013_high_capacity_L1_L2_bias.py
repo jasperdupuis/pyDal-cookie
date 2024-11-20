@@ -22,9 +22,9 @@ import pydal._variables as _vars
 import matplotlib.pyplot as plt
 
 PERCENTILE          = 1
-ALL_DATA            = False
+ALL_DATA            = True
 UPPER_PERCENTILE    = False
-RESIDUALS_ONLY      = True
+RESIDUALS_ONLY      = False
 # for single freq retrieval and testing to find rmse and mae issue:
 TROUBLESHOOT        = False
 
@@ -32,7 +32,8 @@ TROUBLESHOOT        = False
 # 0. Hydrophone and model selection parameters
 p_hydros        = _vars.HYDROS
 # p_hydros        = ['SOUTH']
-target_freqs    = np.arange(10,301) #10,300 is target.
+# target_freqs    = np.arange(10,301) #10,300 is target.
+target_freqs     = [200]
 # target_freqs    = np.arange(88,89) # TESTING LINE
 standard        = 'STANAG'
 coordinate      = 'Y'
